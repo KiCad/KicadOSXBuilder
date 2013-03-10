@@ -79,7 +79,10 @@ STEP=2
 starting
 
 test -d $SRC_DIR/kicad || (cd $SRC_DIR; bzr branch lp:kicad ; cd ..) || exit_on_build_error
-test -d $SRC_DIR/kicad && (cd $SRC_DIR/kicad; bzr update; cd ..) || exit_on_build_error
+test -d $SRC_DIR/kicad && (cd $SRC_DIR/kicad; bzr pull; cd ..) || exit_on_build_error
+
+test -d $SRC_DIR/library || (cd $SRC_DIR; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
+test -d $SRC_DIR/library && (cd $SRC_DIR/library; bzr pull; cd ..) || exit_on_build_error
 }
 
 step3()
@@ -90,7 +93,8 @@ STEP=3
 starting
 test -d $BUILD_DIR/$WXPYTHON_DIR || mkdir $BUILD_DIR/$WXPYTHON_DIR 
 cd $BUILD_DIR/$WXPYTHON_DIR 
- export OSX_ARCH_OPTS="-arch i386 -arch x86_64"
+
+export OSX_ARCH_OPTS="-arch i386 -arch x86_64"
 test -f Makefile ||  $SRC_DIR/$WXPYTHON_DIR/configure  --disable-debug 		\
 								--prefix=$PREFIX_DIR  						\
 								--enable-unicode	  						\
@@ -147,9 +151,6 @@ STEP=5
 starting
 
 export PATH=$PREFIX_DIR/bin:$PATH
-
-set
-
 export wxWidgets_ROOT_DIR=$PREFIX_DIR
 
 test -d $BUILD_DIR/$KICAD_DIR || mkdir $BUILD_DIR/$KICAD_DIR 
@@ -160,7 +161,6 @@ mkdir -p $PREFIX_DIR/python/site-packages
 						  -DKICAD_SCRIPTING=ON 			\
 						  -DKICAD_SCRIPTING_MODULES=ON  \
 						  -DKICAD_SCRIPTING_WXPYTHON=ON \
-						  -DUSE_FP_LIB_TABLE=ON 		\
 						  -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__  \
 						  -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR \
 						  -DCMAKE_BUILD_TYPE=None \
@@ -171,29 +171,56 @@ mkdir -p $PREFIX_DIR/python/site-packages
 						  -DPYTHON_PACKAGES_PATH=$PREFIX_DIR/python/site-packages \
 						  -DCMAKE_OSX_ARCHITECTURES="x86_64 -arch i386"
 
-make $MAKE_OPTS VERBOSE=1 install || exit_on_build_error
+make $MAKE_OPTS install || exit_on_build_error
 cd ../..
 }
 
 step6()
 {
-	STEPNAME="REPACKAGE PCBNEW.app"
+	STEPNAME="Installing libraries"
+	STEP=6
+	starting
+
+	mkdir -p $BUILD_DIR/library
+	cd $BUILD_DIR/library
+
+	cmake $SRC_DIR/library/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR \
+							-DKICAD_MODULES=$PREFIX_DIR/share/kicad/modules \
+							-DKICAD_LIBRARY=$PREFIX_DIR/share/kicad/library
+	make install
+	cd $DIR
+}
+
+step7()
+{
+	STEPNAME="REPACKAGE *.app"
+	STEP=7
+	starting
 	
 	mkdir -p $PREFIX_DIR/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
 
 	PYTHON_SITE_PKGS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
 	FRAMEWORK_LIBS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/
-	
+	KICAD_DATA=$PREFIX_DIR/bin/kicad.app/Contents/Resources/kicad
+
 	PCBNEW_EXES=$PREFIX_DIR/bin/pcbnew.app/Contents/MacOS
 	KICAD_EXES=$PREFIX_DIR/bin/kicad.app/Contents/MacOS
 	
 
 
+	mkdir -p $KICAD_DATA
+	echo "copying kicad data"
+	cp -rfp $PREFIX_DIR/share/kicad/* $KICAD_DATA/
+	echo "copying kicad libs"
 	cp $BUILD_DIR/$KICAD_DIR/pcbnew/_pcbnew.so 								$PYTHON_SITE_PKGS
 	cp $BUILD_DIR/$KICAD_DIR/pcbnew/pcbnew.py  								$PYTHON_SITE_PKGS
 	cp -rfp $PREFIX_DIR/lib/libwx*2.9.dylib 			 					$FRAMEWORK_LIBS
+	cd $FRAMEWORK_LIBS
+	ln -s libwx_osx_cocoau-2.9.dylib libwx_osx_cocoau-2.9.4.0.0.dylib
+	cd $DIR
 	cp -rfp $PREFIX_DIR/lib/python2.7/site-packages/wx-2.9.4-osx_cocoa/wx   $PYTHON_SITE_PKGS
-	
+
+
 	for APP in bitmap2component eeschema gerbview pcbnew pcb_calculator kicad cvpcb 
 	do
 		echo repackaging $APP
@@ -204,10 +231,22 @@ step6()
 	done
 
 
-
+	cd $DIR
 }
 
+step8()
+{
+	STEPNAME="make a zip with all the apps"
+	STEP=8
+	starting
+	rm -rf package
+	mkdir -p package
+	cp -rfp $PREFIX_DIR/bin/*.app package
+	cd package
+	zip -r kicad-scripting-osx-latest.zip *.app
+	cd $DIR
 
+}
 
 
 step1
@@ -216,4 +255,7 @@ step3
 step4
 step5
 step6
+step7
+step8
+
 echo "Done!! :-)"

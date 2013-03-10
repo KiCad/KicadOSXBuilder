@@ -1,4 +1,5 @@
-= Kicad OSX Builder
+Kicad OSX Builder
+
 this is a build system to make universal OSX kicad binaries with scripting support,
 it packs wxpython and pcbnew plugins together into kicad.app, and wraps all kicad apps
 to use the libraries in there.
