@@ -201,16 +201,13 @@ step7()
 
 	PYTHON_SITE_PKGS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
 	FRAMEWORK_LIBS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/
-	KICAD_DATA=$PREFIX_DIR/bin/kicad.app/Contents/Resources/kicad
-
+	
 	PCBNEW_EXES=$PREFIX_DIR/bin/pcbnew.app/Contents/MacOS
 	KICAD_EXES=$PREFIX_DIR/bin/kicad.app/Contents/MacOS
 	
 
 
-	mkdir -p $KICAD_DATA
-	echo "copying kicad data"
-	cp -rfp $PREFIX_DIR/share/kicad/* $KICAD_DATA/
+	
 	echo "copying kicad libs"
 	cp $BUILD_DIR/$KICAD_DIR/pcbnew/_pcbnew.so 								$PYTHON_SITE_PKGS
 	cp $BUILD_DIR/$KICAD_DIR/pcbnew/pcbnew.py  								$PYTHON_SITE_PKGS
@@ -240,10 +237,14 @@ step8()
 	STEP=8
 	starting
 	rm -rf package
-	mkdir -p package
-	cp -rfp $PREFIX_DIR/bin/*.app package
+	mkdir -p package/KiCad/data
+	echo "copying apps"
+	cp -rfp $PREFIX_DIR/bin/*.app package/KiCad
+	echo "copying kicad data"
+	cp -rfp $PREFIX_DIR/share/kicad/* package/KiCad/data
+	REVNO=`cd $SRC_DIR/kicad; bzr revno`
 	cd package
-	zip -r kicad-scripting-osx-latest.zip *.app
+	zip -r kicad-scripting-osx-$REVNO.zip KiCad/*
 	cd $DIR
 
 }
