@@ -1,6 +1,6 @@
 
 MAC_OS_VERSION=10.7
-MAKE_OPTS=-j5
+MAKE_OPTS=-j8
 
 WXPYTHON_DIR=wxPython-src-2.9.4.0
 WXPYTHON_URL=http://downloads.sourceforge.net/wxpython/$WXPYTHON_DIR.tar.bz2
@@ -237,11 +237,12 @@ step8()
 	STEP=8
 	starting
 	rm -rf package
-	mkdir -p package/KiCad/data
+	mkdir -p package/KiCad/data/scripting/plugins
 	echo "copying apps"
 	cp -rfp $PREFIX_DIR/bin/*.app package/KiCad
 	echo "copying kicad data"
 	cp -rfp $PREFIX_DIR/share/kicad/* package/KiCad/data
+	cp -rfp $SRC_DIR/kicad/pcbnew/scripting/plugins/* package/KiCad/data/scripting/plugins
 	REVNO=`cd $SRC_DIR/kicad; bzr revno`
 	cd package
 	zip -r kicad-scripting-osx-$REVNO.zip KiCad/*

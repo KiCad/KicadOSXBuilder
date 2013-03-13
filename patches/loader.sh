@@ -7,6 +7,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export KICAD_APP=$DIR/../../../kicad.app
 export KICAD_DATA=$DIR/../../../data
+export KICAD_PATH=$KICAD_DATA
 
 # let the apps find the libraries at startup
 export DYLD_LIBRARY_PATH=$KICAD_APP/Contents/Frameworks:$DYLD_LIBRARY_PATH
