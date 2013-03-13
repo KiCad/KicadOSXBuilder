@@ -2,8 +2,9 @@
 MAC_OS_VERSION=10.7
 MAKE_OPTS=-j8
 
-WXPYTHON_DIR=wxPython-src-2.9.4.0
-WXPYTHON_URL=http://downloads.sourceforge.net/wxpython/$WXPYTHON_DIR.tar.bz2
+WXPYTHON_VER=2.9.4.0
+WXPYTHON_DIR=wxPython-src-$WXPYTHON_VER
+WXPYTHON_URL=http://downloads.sourceforge.net/project/wxpython/wxPython/$WXPYTHON_VER/$WXPYTHON_DIR.tar.bz2
 
 KICAD_DIR=kicad
 
@@ -65,7 +66,7 @@ STEP=1
 
 starting
 
-test -f $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || wget $WXPYTHON_URL -O $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || exit_on_build_error
+test -f $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || curl -L $WXPYTHON_URL -o $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || exit_on_build_error
 test -d $SRC_DIR/$WXPYTHON_DIR || unpack_patch_wxpython
 
 }
