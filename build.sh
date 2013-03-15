@@ -12,11 +12,30 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 BUILD_DIR=$DIR/build
 PREFIX_DIR=$DIR/output
+PACKAGE_DIR=$DIR/package
 SRC_DIR=$DIR/src
 ARCHIVE_DIR=$DIR/archive
 
-#WX_DEBUG=--enable-debug
+if [ $1 == "DEBUG" ]; then 
 
+	WX_DEBUG=--enable-debug
+	KICAD_DEBUG="-DCMAKE_BUILD_TYPE=Debug"
+	BUILD_DIR=$BUILD_DIR-debug
+	PREFIX_DIR=$PREFIX_DIR-debug
+	PACKAGE_DIR=$PACKAGE_DIR-debug
+	REVDEBUG=-debug
+	echo "BUILDING DEBUG BINARIES"
+else
+	WX_DEBUG=
+	KICAD_DEBUG="-DCMAKE_BUILD_TYPE=Release"
+	REVDEBUG=""
+	echo "BUILDING RELEASE BINARIES"
+fi
+
+
+mkdir -p $BUILD_DIR
+mkdir -p $PREFIX_DIR
+mkdir -p $PACKAGE_DIR
 
 
 exit_on_install_error()
@@ -158,7 +177,7 @@ test -d $BUILD_DIR/$KICAD_DIR || mkdir $BUILD_DIR/$KICAD_DIR
 cd $BUILD_DIR/$KICAD_DIR 
 mkdir -p $PREFIX_DIR/python/site-packages
 
- cmake $SRC_DIR/$KICAD_DIR -DKICAD_TESTING_VERSION=ON 	\
+cmake $SRC_DIR/$KICAD_DIR -DKICAD_TESTING_VERSION=ON 	\
 						  -DKICAD_SCRIPTING=ON 			\
 						  -DKICAD_SCRIPTING_MODULES=ON  \
 						  -DKICAD_SCRIPTING_WXPYTHON=ON \
@@ -170,10 +189,19 @@ mkdir -p $PREFIX_DIR/python/site-packages
 						  -DPYTHON_EXECUTABLE=`which python` \
 						  -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIR/python/site-packages \
 						  -DPYTHON_PACKAGES_PATH=$PREFIX_DIR/python/site-packages \
-						  -DCMAKE_OSX_ARCHITECTURES="x86_64 -arch i386"
+						  -DCMAKE_OSX_ARCHITECTURES="x86_64 -arch i386" \
+						  $KICAD_DEBUG
+
+#dependencies on swig .i files are not well managed, so if we clear this
+#then swig rebuilds the .cxx files
+rm $BUILD_DIR/$KICAD_DIR/pcbnew/pcbnew_wrap.cxx
+rm $BUILD_DIR/$KICAD_DIR/pcbnew/scripting/pcbnewPYTHON_wrap.cxx 
+
 
 make $MAKE_OPTS install || exit_on_build_error
+
 cd ../..
+
 }
 
 step6()
@@ -237,16 +265,16 @@ step8()
 	STEPNAME="make a zip with all the apps"
 	STEP=8
 	starting
-	rm -rf package
-	mkdir -p package/KiCad/data/scripting/plugins
+	rm -rf $PACKAGE_DIR
+	mkdir -p $PACKAGE_DIR/KiCad/data/scripting/plugins
 	echo "copying apps"
-	cp -rfp $PREFIX_DIR/bin/*.app package/KiCad
+	cp -rfp $PREFIX_DIR/bin/*.app $PACKAGE_DIR/KiCad
 	echo "copying kicad data"
-	cp -rfp $PREFIX_DIR/share/kicad/* package/KiCad/data
-	cp -rfp $SRC_DIR/kicad/pcbnew/scripting/plugins/* package/KiCad/data/scripting/plugins
+	cp -rfp $PREFIX_DIR/share/kicad/* $PACKAGE_DIR/KiCad/data
+	cp -rfp $SRC_DIR/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIR/KiCad/data/scripting/plugins
 	REVNO=`cd $SRC_DIR/kicad; bzr revno`
-	cd package
-	zip -r kicad-scripting-osx-$REVNO.zip KiCad/*
+	cd $PACKAGE_DIR
+	zip -r kicad-scripting-osx-$REVNO$REVDEBUG.zip KiCad/*
 	cd $DIR
 
 }
