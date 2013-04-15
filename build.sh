@@ -259,6 +259,7 @@ step7()
 
 
 	cd $DIR
+	
 }
 
 step8()
@@ -270,6 +271,7 @@ step8()
 	mkdir -p $PACKAGE_DIR/KiCad/data/scripting/plugins
 	echo "copying apps"
 	cp -rfp $PREFIX_DIR/bin/*.app $PACKAGE_DIR/KiCad
+	cp patches/python $PACKAGE_DIR/KiCad
 	echo "copying kicad data"
 	cp -rfp $PREFIX_DIR/share/kicad/* $PACKAGE_DIR/KiCad/data
 	cp -rfp $SRC_DIR/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIR/KiCad/data/scripting/plugins
