@@ -8,31 +8,31 @@ REVISION_APPENDIX=
 # Here comes the parameter parsing. Pretty rudimentary, but it works.
 
 while [ "$1" != "" ]; do
-  case $1 in
-    -d | --debug )  BUILD_TYPE=Debug          # The user might select a debug build via this flag
-                    ;;
-    -a | --arch )   shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
-                    BUILD_ARCHITECTURES+=($1)
-                    ;;
-    -c | --cpus )   shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
-                    CPU_COUNT=$1
-                    ;;
-    -h | --help )   usage                     # Print the help text
-                    exit 0
-                    ;;
-    * )             usage
-                    exit 1
-    esac
-    shift
+	case $1 in
+		-d | --debug ) BUILD_TYPE=Debug          # The user might select a debug build via this flag
+		               ;;
+		-a | --arch )  shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
+		               BUILD_ARCHITECTURES+=($1)
+		               ;;
+		-c | --cpus )  shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
+		               CPU_COUNT=$1
+		               ;;
+		-h | --help )  usage                     # Print the help text
+		               exit 0
+		               ;;
+		* )            usage
+		               exit 1
+	esac
+	shift
 done
 
 if [ ${#BUILD_ARCHITECTURES[@]} = 0 ]; then
-  BUILD_ARCHITECTURES=( i386 x86_64 )
+	BUILD_ARCHITECTURES=( i386 x86_64 )
 fi
 
 for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
 do
-  BUILD_ARCHITECTURES_STRING=$BUILD_ARCHITECTURES_STRING"-arch ${ARCHITECTURE} "
+	BUILD_ARCHITECTURES_STRING=$BUILD_ARCHITECTURES_STRING"-arch ${ARCHITECTURE} "
 done
 
 MAKE_OPTIONS=-j$(($CPU_COUNT*2)) # use twice as many threads as CPUs (cores) are in the system
@@ -64,10 +64,10 @@ if [ $BUILD_TYPE = Debug ]; then
 fi
 
 case $BUILD_TYPE in
-  Release ) echo "BUILDING RELEASE BINARIES"
-            ;;
-  Debug )   echo "BUILDING DEBUG BINARIES"
-            ;;
+	Release ) echo "BUILDING RELEASE BINARIES"
+		  ;;
+	Debug )   echo "BUILDING DEBUG BINARIES"
+            	  ;;
 esac
 
 mkdir -p $BUILD_DIRECTORY
@@ -113,137 +113,138 @@ step1()
 		cd $SCRIPT_DIRECTORY
 	}
 
-STEP_NAME="CHECK & UNPACK WXPYTHON ($WXPYTHON_SOURCE_DIRECTORY)"
-STEP_NUMBER=1
+	STEP_NAME="CHECK & UNPACK WXPYTHON ($WXPYTHON_SOURCE_DIRECTORY)"
+	STEP_NUMBER=1
 
-print_step_starting_message
+	print_step_starting_message
 
-test -f $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || curl -L $WXPYTHON_DOWNLOAD_URL -o $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || exit_on_build_error
-test -d $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY || unpack_patch_wxpython
+	test -f $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || curl -L $WXPYTHON_DOWNLOAD_URL -o $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY || unpack_patch_wxpython
 
 }
 
 step2()
 {
 
-if [ -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY ]; then
-  STEP_NAME="GET KICAD SOURCES"
-else
-  STEP_NAME="UPDATE KICAD SOURCES"
-fi
+	if [ -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY ]; then
+	  STEP_NAME="GET KICAD SOURCES"
+	else
+	  STEP_NAME="UPDATE KICAD SOURCES"
+	fi
 
-STEP_NUMBER=2
-print_step_starting_message
+	STEP_NUMBER=2
+	print_step_starting_message
 
-test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:kicad ; cd ..) || exit_on_build_error
-test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:kicad ; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
-test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
-test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY && (cd $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY && (cd $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
+
 }
 
 step3()
 {
 
-STEP_NAME="BUILD WXWIDGETS"
-STEP_NUMBER=3
-print_step_starting_message
+	STEP_NAME="BUILD WXWIDGETS"
+	STEP_NUMBER=3
+	print_step_starting_message
 
-mkdir -p $BUILD_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY
-cd $BUILD_DIRECTORY/$WXPYTHON_DIR
+	mkdir -p $BUILD_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY
+	cd $BUILD_DIRECTORY/$WXPYTHON_DIR
 
-export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
+	export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
 
-test -f Makefile ||  $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/configure  --disable-debug             \
-                                                                             --prefix=$PREFIX_DIRECTORY  \
-                                                                             --enable-unicode	  			   \
-                                                                             --enable-std_string   		   \
-                                                                             --enable-display					   \
-                                                                             --with-opengl							 \
-                                                                             --with-osx_cocoa					   \
-                                                                             --with-libjpeg						   \
-                                                                             --with-libtiff						   \
-                                                                             --with-libpng							 \
-                                                                             --with-zlib								 \
-                                                                             --enable-dnd							   \
-                                                                             --enable-clipboard				   \
-                                                                             --enable-webkit						 \
-                                                                             --enable-monolithic				 \
-                                                                             --enable-svg                \
-                                                                             --with-expat							   \
-                                                                             --enable-universal-binary   \
-                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
+	test -f Makefile ||  $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/configure  --disable-debug            \
+	                                                                             --prefix=$PREFIX_DIRECTORY \
+	                                                                             --enable-unicode	  	\
+	                                                                             --enable-std_string   	\
+	                                                                             --enable-display		\
+	                                                                             --with-opengl		\
+	                                                                             --with-osx_cocoa		\
+	                                                                             --with-libjpeg		\
+	                                                                             --with-libtiff		\
+	                                                                             --with-libpng		\
+	                                                                             --with-zlib		\
+	                                                                             --enable-dnd		\
+	                                                                             --enable-clipboard		\
+	                                                                             --enable-webkit		\
+	                                                                             --enable-monolithic	\
+	                                                                             --enable-svg               \
+	                                                                             --with-expat		\
+	                                                                             --enable-universal-binary  \
+	                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
 
 
-make $MAKE_OPTIONS || exit_on_build_error
-make install || exit_on_build_error
-cd $SCRIPT_DIRECTORY
+	make $MAKE_OPTIONS || exit_on_build_error
+	make install || exit_on_build_error
+	cd $SCRIPT_DIRECTORY
 
 }
 
 step4()
 {
 
-STEP_NAME="BUILD WXPYTHON PYTHON EXTENSIONS"
-STEP_NUMBER=4
-print_step_starting_message
+	STEP_NAME="BUILD WXPYTHON PYTHON EXTENSIONS"
+	STEP_NUMBER=4
+	print_step_starting_message
 
-PY_OPTS="WXPORT=osx_cocoa UNICODE=1 INSTALL_MULTIVERSION=1 BUILD_GLCANVAS=1 BUILD_GIZMOS=1 BUILD_STC=1"
+	PY_OPTS="WXPORT=osx_cocoa UNICODE=1 INSTALL_MULTIVERSION=1 BUILD_GLCANVAS=1 BUILD_GIZMOS=1 BUILD_STC=1"
 
-cd $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/wxPython
+	cd $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/wxPython
 
-python setup.py build_ext  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config $PY_OPTS  || exit_on_build_error
+	python setup.py build_ext  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config $PY_OPTS  || exit_on_build_error
 
-python setup.py install --prefix=$PREFIX_DIRECTORY  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config  $PY_OPTS || exit_on_build_error
+	python setup.py install --prefix=$PREFIX_DIRECTORY  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config  $PY_OPTS || exit_on_build_error
 
-cd $SCRIPT_DIRECTORY
+	cd $SCRIPT_DIRECTORY
 
 }
 
 step5()
 {
 
-STEP_NAME="BUILD KICAD"
-STEP_NUMBER=5
-print_step_starting_message
+	STEP_NAME="BUILD KICAD"
+	STEP_NUMBER=5
+	print_step_starting_message
 
-export PATH=$PREFIX_DIRECTORY/bin:$PATH
-export wxWidgets_ROOT_DIR=$PREFIX_DIRECTORY
+	export PATH=$PREFIX_DIRECTORY/bin:$PATH
+	export wxWidgets_ROOT_DIR=$PREFIX_DIRECTORY
 
-mkdir -p $BUILD_DIRECTORY/$KICAD_DIRECTORY
-cd $BUILD_DIRECTORY/$KICAD_DIRECTORY
-mkdir -p $PREFIX_DIRECTORY/python/site-packages
+	mkdir -p $BUILD_DIRECTORY/$KICAD_DIRECTORY
+	cd $BUILD_DIRECTORY/$KICAD_DIRECTORY
+	mkdir -p $PREFIX_DIRECTORY/python/site-packages
 
-CMAKE_ARCHITECTURE_STRING=
+	CMAKE_ARCHITECTURE_STRING=
 
-for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
-do
-  CMAKE_ARCHITECTURE_STRING=$CMAKE_ARCHITECTURE_STRING"${ARCHITECTURE} -arch "
-done
-CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING% -arch }
+	for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
+	do
+		CMAKE_ARCHITECTURE_STRING=$CMAKE_ARCHITECTURE_STRING"${ARCHITECTURE} -arch "
+	done
+	CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING% -arch }
 
-cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
-                                         -DKICAD_SCRIPTING=ON                                              \
-                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
-                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
-                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
-                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
-                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
-                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
-                                         -DPYTHON_EXECUTABLE=`which python`                                \
-                                         -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
-                                         -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
-                                         -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHITECTURE_STRING              \
-                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+	cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
+                                         	 -DKICAD_SCRIPTING=ON                                              \
+                                         	 -DKICAD_SCRIPTING_MODULES=ON                                      \
+                                         	 -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
+                                         	 -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
+                                         	 -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
+                                         	 -DCMAKE_FIND_FRAMEWORK=LAST                                       \
+                                          	 -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
+                                         	 -DPYTHON_EXECUTABLE=`which python`                                \
+                                         	 -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
+                                         	 -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
+                                         	 -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHITECTURE_STRING              \
+                                         	 -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-#dependencies on swig .i files are not well managed, so if we clear this
-#then swig rebuilds the .cxx files
-rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
-rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
+	#dependencies on swig .i files are not well managed, so if we clear this
+	#then swig rebuilds the .cxx files
+	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
+	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
 
-make $MAKE_OPTIONS install || exit_on_build_error
+	make $MAKE_OPTIONS install || exit_on_build_error
 
-cd $SCRIPT_DIRECTORY
+	cd $SCRIPT_DIRECTORY
 
 }
 
@@ -291,9 +292,8 @@ step7()
 	for APP in bitmap2component eeschema gerbview pcbnew pcb_calculator kicad cvpcb 
 	do
 		echo repackaging $APP
-		cp -rfp $BUILD_DIRECTORY/$KICAD_DIRECTORY/$APP/$APP.app/Contents/MacOS/$APP   \
-			$PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
-		cp -rfp $SCRIPT_DIRECTORY/patches/loader.sh  	$PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
+		cp -rfp $BUILD_DIRECTORY/$KICAD_DIRECTORY/$APP/$APP.app/Contents/MacOS/$APP $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
+		cp -rfp $SCRIPT_DIRECTORY/patches/loader.sh $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
 		chmod a+x $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
 	done
 
@@ -312,7 +312,7 @@ step8()
 	mkdir -p $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
 	echo "copying apps"
 	cp -rfp $PREFIX_DIRECTORY/bin/*.app $PACKAGE_DIRECTORY/KiCad
-  cp patches/python $PACKAGE_DIR/KiCad
+	cp patches/python $PACKAGE_DIR/KiCad
 	echo "copying kicad data"
 	cp -rfp $PREFIX_DIRECTORY/share/kicad/* $PACKAGE_DIRECTORY/KiCad/data
 	cp -rfp $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
@@ -323,13 +323,6 @@ step8()
 
 }
 
-step1
-step2
-step3
-step4
-step5
-step6
-step7
-step8
+step1 step2 step3 step4 step5 step6 step7 step8
 
 echo "Done!! :-)"
