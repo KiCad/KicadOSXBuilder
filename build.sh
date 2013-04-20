@@ -242,7 +242,7 @@ step5()
                                          	 -DPYTHON_EXECUTABLE=`which python`                                \
                                          	 -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
                                          	 -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
-                                         	 -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHITECTURE_STRING              \
+                                         	 -DCMAKE_OSX_ARCHITECTURES="${CMAKE_ARCHITECTURE_STRING}"      \
                                          	 -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 	#dependencies on swig .i files are not well managed, so if we clear this
