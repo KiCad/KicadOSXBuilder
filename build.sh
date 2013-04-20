@@ -81,17 +81,18 @@ mkdir -p $BUILD_DIRECTORY
 mkdir -p $PREFIX_DIRECTORY
 mkdir -p $PACKAGE_DIRECTORY
 mkdir -p $ARCHIVE_DIRECTORY
+mkdir -p $SOURCE_DIRECTORY
 
 exit_on_install_error()
 {
 	echo "install error on $STEP_NAME  STEP: $STEP_NUMBER"
-	exit -1
+	exit 1
 }
 
 exit_on_build_error()
 {
 	echo "build error on $STEP_NAME  STEP: $STEP_NUMBER"
-	exit -2
+	exit 2
 }
 
 print_step_starting_message()
@@ -158,7 +159,7 @@ step3()
 	print_step_starting_message
 
 	mkdir -p $BUILD_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY
-	cd $BUILD_DIRECTORY/$WXPYTHON_DIR
+	cd $BUILD_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY
 
 	export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
 
@@ -330,6 +331,14 @@ step8()
 
 }
 
-step1 step2 step3 step4 step5 step6 step7 step8
+
+step1
+step2
+step3
+step4
+step5
+step6
+step7
+step8
 
 echo "Done!! :-)"
