@@ -1,65 +1,98 @@
+BUILD_TYPE=Release            # Set to the users desired build type
+BUILD_ARCHITECTURES=()        # An array to store which architectures will be built
+BUILD_ARCHITECTURES_STRING=
+CPU_COUNT=4                   # The number of CPUs (core) in the system (defaults to 4)
+WXWIDGETS_ADDITIONAL_FLAGS=
+REVISION_APPENDIX=
 
-MAC_OS_VERSION=10.7
-MAKE_OPTS=-j8
+# Here comes the parameter parsing. Pretty rudimentary, but it works.
 
-WXPYTHON_VER=2.9.4.0
-WXPYTHON_DIR=wxPython-src-$WXPYTHON_VER
-WXPYTHON_URL=http://downloads.sourceforge.net/project/wxpython/wxPython/$WXPYTHON_VER/$WXPYTHON_DIR.tar.bz2
+while [ "$1" != "" ]; do
+  case $1 in
+    -d | --debug )  BUILD_TYPE=Debug          # The user might select a debug build via this flag
+                    ;;
+    -a | --arch )   shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
+                    BUILD_ARCHITECTURES+=($1)
+                    ;;
+    -c | --cpus )   shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
+                    CPU_COUNT=$1
+                    ;;
+    -h | --help )   usage                     # Print the help text
+                    exit 0
+                    ;;
+    * )             usage
+                    exit 1
+    esac
+    shift
+done
 
-KICAD_DIR=kicad
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-BUILD_DIR=$DIR/build
-PREFIX_DIR=$DIR/output
-PACKAGE_DIR=$DIR/package
-SRC_DIR=$DIR/src
-ARCHIVE_DIR=$DIR/archive
-
-if [ $1 == "DEBUG" ]; then 
-
-	WX_DEBUG=--enable-debug
-	KICAD_DEBUG="-DCMAKE_BUILD_TYPE=Debug"
-	BUILD_DIR=$BUILD_DIR-debug
-	PREFIX_DIR=$PREFIX_DIR-debug
-	PACKAGE_DIR=$PACKAGE_DIR-debug
-	REVDEBUG=-debug
-	echo "BUILDING DEBUG BINARIES"
-else
-	WX_DEBUG=
-	KICAD_DEBUG="-DCMAKE_BUILD_TYPE=Release"
-	REVDEBUG=""
-	echo "BUILDING RELEASE BINARIES"
+if [ ${#BUILD_ARCHITECTURES[@]} = 0 ]; then
+  BUILD_ARCHITECTURES=( i386 x86_64 )
 fi
 
+for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
+do
+  BUILD_ARCHITECTURES_STRING=$BUILD_ARCHITECTURES_STRING"-arch ${ARCHITECTURE} "
+done
 
-mkdir -p $BUILD_DIR
-mkdir -p $PREFIX_DIR
-mkdir -p $PACKAGE_DIR
+MAKE_OPTIONS=-j$(($CPU_COUNT*2)) # use twice as many threads as CPUs (cores) are in the system
 
+WXPYTHON_VERSION=2.9.4.0
+WXPYTHON_MAC_OS_VERSION=`sw_vers -productVersion`
+WXPYTHON_SOURCE_DIRECTORY=wxPython-src-$WXPYTHON_VERSION
+WXPYTHON_DOWNLOAD_URL=http://downloads.sourceforge.net/project/wxpython/wxPython/$WXPYTHON_VERSION/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2
+
+KICAD_DIRECTORY=kicad
+LIBRARY_DIRECTORY=library
+
+SCRIPT_DIRECTORY="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+BUILD_DIRECTORY=$SCRIPT_DIRECTORY/build
+PREFIX_DIRECTORY=$SCRIPT_DIRECTORY/output
+PACKAGE_DIRECTORY=$SCRIPT_DIRECTORY/package
+SOURCE_DIRECTORY=$SCRIPT_DIRECTORY/src
+ARCHIVE_DIRECTORY=$SCRIPT_DIRECTORY/archive
+PATCH_DIRECTORY=$SCRIPT_DIRECTORY/patches
+
+if [ $BUILD_TYPE = Debug ]; then
+	WXWIDGETS_ADDITIONAL_FLAGS=--enable-debug
+	KICAD_BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
+	BUILD_DIRECTORY=$BUILD_DIR-debug
+	PREFIX_DIRECTORY=$PREFIX_DIRECTORY-debug
+	PACKAGE_DIRECTORY=$PACKAGE_DIR-debug
+	REVISION_APPENDIX=-debug
+fi
+
+case $BUILD_TYPE in
+  Release ) echo "BUILDING RELEASE BINARIES"
+            ;;
+  Debug )   echo "BUILDING DEBUG BINARIES"
+            ;;
+esac
+
+mkdir -p $BUILD_DIRECTORY
+mkdir -p $PREFIX_DIRECTORY
+mkdir -p $PACKAGE_DIRECTORY
+mkdir -p $ARCHIVE_DIRECTORY
 
 exit_on_install_error()
 {
-	echo "install error on $STEPNAME  STEP: $STEP"
-	exit 1
+	echo "install error on $STEP_NAME  STEP: $STEP_NUMBER"
+	exit -1
 }
 
 exit_on_build_error()
 {
-	echo "build error on $STEPNAME  STEP: $STEP"
-	exit 1
+	echo "build error on $STEP_NAME  STEP: $STEP_NUMBER"
+	exit -2
 }
 
-
-
-
-
-starting()
+print_step_starting_message()
 {
 	echo ""
 	echo ""
 	echo "****************************************************************************"
-	echo "Starting step: $STEPNAME"
+	echo "Starting step: $STEP_NAME"
 	echo "****************************************************************************"
 	echo ""
 	echo ""
@@ -71,217 +104,224 @@ step1()
 
 	unpack_patch_wxpython()
 	{
-		cd $SRC_DIR 
-		echo unpacking wxpython sources .....
-		tar xfj ../archive/$WXPYTHON_DIR.tar.bz2 || exit_on_build_error
-		cd $WXPYTHON_DIR
-		echo patching wxpython sources ....
-		patch -p1 < ../../patches/wxpython-2.9.4.0-kicad.patch || exit_on_build_error
-		cd ../..  
+		cd $SOURCE_DIRECTORY
+		echo "unpacking wxpython sources ..."
+		tar xfj $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || exit_on_build_error
+		cd $WXPYTHON_SOURCE_DIRECTORY
+		echo "patching wxpython sources ..."
+		patch -p1 < $PATCH_DIRECTORY/wxpython-2.9.4.0-kicad.patch || exit_on_build_error
+		cd $SCRIPT_DIRECTORY
 	}
 
-STEPNAME="CHECK & UNPACK $WXPYTHON_DIR"
-STEP=1
+STEP_NAME="CHECK & UNPACK WXPYTHON ($WXPYTHON_SOURCE_DIRECTORY)"
+STEP_NUMBER=1
 
-starting
+print_step_starting_message
 
-test -f $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || curl -L $WXPYTHON_URL -o $ARCHIVE_DIR/$WXPYTHON_DIR.tar.bz2 || exit_on_build_error
-test -d $SRC_DIR/$WXPYTHON_DIR || unpack_patch_wxpython
+test -f $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || curl -L $WXPYTHON_DOWNLOAD_URL -o $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || exit_on_build_error
+test -d $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY || unpack_patch_wxpython
 
 }
 
 step2()
 {
 
+if [ -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY ]; then
+  STEP_NAME="GET KICAD SOURCES"
+else
+  STEP_NAME="UPDATE KICAD SOURCES"
+fi
 
-STEPNAME="GET & UPDATE KICAD DEVEL SOURCES"
-STEP=2
-starting
+STEP_NUMBER=2
+print_step_starting_message
 
-test -d $SRC_DIR/kicad || (cd $SRC_DIR; bzr branch lp:kicad ; cd ..) || exit_on_build_error
-test -d $SRC_DIR/kicad && (cd $SRC_DIR/kicad; bzr pull; cd ..) || exit_on_build_error
+test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:kicad ; cd ..) || exit_on_build_error
+test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
-test -d $SRC_DIR/library || (cd $SRC_DIR; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
-test -d $SRC_DIR/library && (cd $SRC_DIR/library; bzr pull; cd ..) || exit_on_build_error
+test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
+test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY && (cd $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 }
 
 step3()
 {
 
-STEPNAME="BUILD WXWIDGETS FROM SOURCES"
-STEP=3
-starting
-test -d $BUILD_DIR/$WXPYTHON_DIR || mkdir $BUILD_DIR/$WXPYTHON_DIR 
-cd $BUILD_DIR/$WXPYTHON_DIR 
+STEP_NAME="BUILD WXWIDGETS"
+STEP_NUMBER=3
+print_step_starting_message
 
-export OSX_ARCH_OPTS="-arch i386 -arch x86_64"
-test -f Makefile ||  $SRC_DIR/$WXPYTHON_DIR/configure  --disable-debug 		\
-								--prefix=$PREFIX_DIR  						\
-								--enable-unicode	  						\
-								--enable-std_string   						\
-							    --enable-display							\
-							    --with-opengl								\
-							    --with-osx_cocoa							\
-							    --with-libjpeg								\
-							    --with-libtiff								\
-							    --with-libpng								\
-							    --with-zlib									\
-							    --enable-dnd								\
-							    --enable-clipboard							\
-							    --enable-webkit								\
-							    --enable-monolithic							\
-							    --enable-svg								\
-							    --with-expat								\
-							    --enable-universal-binary                   \
-							    $WX_DEBUG									 || exit_on_build_error
+mkdir -p $BUILD_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY
+cd $BUILD_DIRECTORY/$WXPYTHON_DIR
 
-#							    --with-macosx-version-min=$MAC_OS_VERSION   || exit_on_build_error
+export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
+
+test -f Makefile ||  $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/configure  --disable-debug             \
+                                                                             --prefix=$PREFIX_DIRECTORY  \
+                                                                             --enable-unicode	  			   \
+                                                                             --enable-std_string   		   \
+                                                                             --enable-display					   \
+                                                                             --with-opengl							 \
+                                                                             --with-osx_cocoa					   \
+                                                                             --with-libjpeg						   \
+                                                                             --with-libtiff						   \
+                                                                             --with-libpng							 \
+                                                                             --with-zlib								 \
+                                                                             --enable-dnd							   \
+                                                                             --enable-clipboard				   \
+                                                                             --enable-webkit						 \
+                                                                             --enable-monolithic				 \
+                                                                             --enable-svg                \
+                                                                             --with-expat							   \
+                                                                             --enable-universal-binary   \
+                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
 
 
-make $MAKE_OPTS || exit_on_build_error
+make $MAKE_OPTIONS || exit_on_build_error
 make install || exit_on_build_error
-cd ..
+cd $SCRIPT_DIRECTORY
+
 }
 
 step4()
 {
 
-STEPNAME="BUILD WXPYTHON PYTHON EXTENSIONS"
-STEP=4
-starting
+STEP_NAME="BUILD WXPYTHON PYTHON EXTENSIONS"
+STEP_NUMBER=4
+print_step_starting_message
 
 PY_OPTS="WXPORT=osx_cocoa UNICODE=1 INSTALL_MULTIVERSION=1 BUILD_GLCANVAS=1 BUILD_GIZMOS=1 BUILD_STC=1"
 
-cd $SRC_DIR/$WXPYTHON_DIR/wxPython
+cd $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/wxPython
 
+python setup.py build_ext  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config $PY_OPTS  || exit_on_build_error
 
-python setup.py build_ext  WX_CONFIG=$PREFIX_DIR/bin/wx-config \
-							$PY_OPTS  || exit_on_build_error
+python setup.py install --prefix=$PREFIX_DIRECTORY  WX_CONFIG=$PREFIX_DIRECTORY/bin/wx-config  $PY_OPTS || exit_on_build_error
 
-python setup.py install  --prefix=$PREFIX_DIR  WX_CONFIG=$PREFIX_DIR/bin/wx-config  $PY_OPTS || exit_on_build_error
+cd $SCRIPT_DIRECTORY
 
-cd ../..
 }
 
 step5()
 {
 
-STEPNAME="BUILD KICAD"
-STEP=5
-starting
+STEP_NAME="BUILD KICAD"
+STEP_NUMBER=5
+print_step_starting_message
 
-export PATH=$PREFIX_DIR/bin:$PATH
-export wxWidgets_ROOT_DIR=$PREFIX_DIR
+export PATH=$PREFIX_DIRECTORY/bin:$PATH
+export wxWidgets_ROOT_DIR=$PREFIX_DIRECTORY
 
-test -d $BUILD_DIR/$KICAD_DIR || mkdir $BUILD_DIR/$KICAD_DIR 
-cd $BUILD_DIR/$KICAD_DIR 
-mkdir -p $PREFIX_DIR/python/site-packages
+mkdir -p $BUILD_DIRECTORY/$KICAD_DIRECTORY
+cd $BUILD_DIRECTORY/$KICAD_DIRECTORY
+mkdir -p $PREFIX_DIRECTORY/python/site-packages
 
-cmake $SRC_DIR/$KICAD_DIR -DKICAD_TESTING_VERSION=ON 	\
-						  -DKICAD_SCRIPTING=ON 			\
-						  -DKICAD_SCRIPTING_MODULES=ON  \
-						  -DKICAD_SCRIPTING_WXPYTHON=ON \
-						  -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__  \
-						  -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR \
-						  -DCMAKE_BUILD_TYPE=None \
-						  -DCMAKE_FIND_FRAMEWORK=LAST \
-						  -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIR/bin/wx-config \
-						  -DPYTHON_EXECUTABLE=`which python` \
-						  -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIR/python/site-packages \
-						  -DPYTHON_PACKAGES_PATH=$PREFIX_DIR/python/site-packages \
-						  -DCMAKE_OSX_ARCHITECTURES="x86_64 -arch i386" \
-						  $KICAD_DEBUG
+CMAKE_ARCHITECTURE_STRING=
+
+for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
+do
+  CMAKE_ARCHITECTURE_STRING=$CMAKE_ARCHITECTURE_STRING"${ARCHITECTURE} -arch "
+done
+CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING% -arch }
+
+cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
+                                         -DKICAD_SCRIPTING=ON                                              \
+                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
+                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
+                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
+                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
+                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
+                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
+                                         -DPYTHON_EXECUTABLE=`which python`                                \
+                                         -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
+                                         -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
+                                         -DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHITECTURE_STRING              \
+                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 #dependencies on swig .i files are not well managed, so if we clear this
 #then swig rebuilds the .cxx files
-rm $BUILD_DIR/$KICAD_DIR/pcbnew/pcbnew_wrap.cxx
-rm $BUILD_DIR/$KICAD_DIR/pcbnew/scripting/pcbnewPYTHON_wrap.cxx 
+rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
+rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
 
+make $MAKE_OPTIONS install || exit_on_build_error
 
-make $MAKE_OPTS install || exit_on_build_error
-
-cd ../..
+cd $SCRIPT_DIRECTORY
 
 }
 
 step6()
 {
-	STEPNAME="Installing libraries"
-	STEP=6
-	starting
+	STEP_NAME="INSTALLING LIBRARY"
+	STEP_NUMBER=6
+	print_step_starting_message
 
-	mkdir -p $BUILD_DIR/library
-	cd $BUILD_DIR/library
+	mkdir -p $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
+	cd $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
 
-	cmake $SRC_DIR/library/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIR \
-							-DKICAD_TEMPLATES=$PREFIX_DIR/share/kicad/templates \
-							-DKICAD_MODULES=$PREFIX_DIR/share/kicad/modules \
-							-DKICAD_LIBRARY=$PREFIX_DIR/share/kicad/library
+	cmake $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY              \
+                                              -DKICAD_TEMPLATES=$PREFIX_DIR/share/kicad/templates   \
+                                              -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
+                                              -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
 	make install
-	cd $DIR
+	cd $SCRIPT_DIRECTORY
 }
 
 step7()
 {
-	STEPNAME="REPACKAGE *.app"
-	STEP=7
-	starting
+	STEP_NAME="REPACKAGE *.app"
+	STEP_NUMBER=7
+	print_step_starting_message
 	
-	mkdir -p $PREFIX_DIR/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
+	mkdir -p $PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
 
-	PYTHON_SITE_PKGS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
-	FRAMEWORK_LIBS=$PREFIX_DIR/bin/kicad.app/Contents/Frameworks/
+	PYTHON_SITE_PKGS=$PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
+	FRAMEWORK_LIBS=$PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/
 	
-	PCBNEW_EXES=$PREFIX_DIR/bin/pcbnew.app/Contents/MacOS
-	KICAD_EXES=$PREFIX_DIR/bin/kicad.app/Contents/MacOS
-	
+	PCBNEW_EXES=$PREFIX_DIRECTORY/bin/pcbnew.app/Contents/MacOS
+	KICAD_EXES=$PREFIX_DIRECTORY/bin/kicad.app/Contents/MacOS
 
-
-	
 	echo "copying kicad libs"
-	cp $BUILD_DIR/$KICAD_DIR/pcbnew/_pcbnew.so 								$PYTHON_SITE_PKGS
-	cp $BUILD_DIR/$KICAD_DIR/pcbnew/pcbnew.py  								$PYTHON_SITE_PKGS
-	cp -rfp $PREFIX_DIR/lib/libwx*2.9.dylib 			 					$FRAMEWORK_LIBS
+	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/_pcbnew.so 								$PYTHON_SITE_PKGS
+	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew.py  								$PYTHON_SITE_PKGS
+	cp -rfp $PREFIX_DIRECTORY/lib/libwx*2.9.dylib 			 					$FRAMEWORK_LIBS
 	cd $FRAMEWORK_LIBS
 	ln -s libwx_osx_cocoau-2.9.dylib libwx_osx_cocoau-2.9.4.0.0.dylib
-	cd $DIR
-	cp -rfp $PREFIX_DIR/lib/python2.7/site-packages/wx-2.9.4-osx_cocoa/wx   $PYTHON_SITE_PKGS
+	cd $SCRIPT_DIRECTORY
+	cp -rfp $PREFIX_DIRECTORY/lib/python2.7/site-packages/wx-2.9.4-osx_cocoa/wx   $PYTHON_SITE_PKGS
 
 
 	for APP in bitmap2component eeschema gerbview pcbnew pcb_calculator kicad cvpcb 
 	do
 		echo repackaging $APP
-		cp -rfp $BUILD_DIR/$KICAD_DIR/$APP/$APP.app/Contents/MacOS/$APP   \
-			$PREFIX_DIR/bin/$APP.app/Contents/MacOS/$APP.bin
-		cp -rfp $DIR/patches/loader.sh  	$PREFIX_DIR/bin/$APP.app/Contents/MacOS/$APP
-		chmod a+x $PREFIX_DIR/bin/$APP.app/Contents/MacOS/$APP
+		cp -rfp $BUILD_DIRECTORY/$KICAD_DIRECTORY/$APP/$APP.app/Contents/MacOS/$APP   \
+			$PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
+		cp -rfp $SCRIPT_DIRECTORY/patches/loader.sh  	$PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
+		chmod a+x $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
 	done
 
 
-	cd $DIR
-	
+	cd $SCRIPT_DIRECTORY
 }
 
 step8()
 {
-	STEPNAME="make a zip with all the apps"
-	STEP=8
-	starting
-	rm -rf $PACKAGE_DIR
-	mkdir -p $PACKAGE_DIR/KiCad/data/scripting/plugins
+
+	STEP_NAME="make a zip with all the apps"
+	STEP_NUMBER=8
+	print_step_starting_message
+
+	rm -rf $PACKAGE_DIRECTORY
+	mkdir -p $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
 	echo "copying apps"
-	cp -rfp $PREFIX_DIR/bin/*.app $PACKAGE_DIR/KiCad
-	cp patches/python $PACKAGE_DIR/KiCad
+	cp -rfp $PREFIX_DIRECTORY/bin/*.app $PACKAGE_DIRECTORY/KiCad
+  cp patches/python $PACKAGE_DIR/KiCad
 	echo "copying kicad data"
-	cp -rfp $PREFIX_DIR/share/kicad/* $PACKAGE_DIR/KiCad/data
-	cp -rfp $SRC_DIR/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIR/KiCad/data/scripting/plugins
-	REVNO=`cd $SRC_DIR/kicad; bzr revno`
-	cd $PACKAGE_DIR
-	zip -r kicad-scripting-osx-$REVNO$REVDEBUG.zip KiCad/*
+	cp -rfp $PREFIX_DIRECTORY/share/kicad/* $PACKAGE_DIRECTORY/KiCad/data
+	cp -rfp $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
+	REVNO=`cd $SOURCE_DIRECTORY/kicad; bzr revno`
+	cd $PACKAGE_DIRECTORY
+	zip -r kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
 	cd $DIR
 
 }
-
 
 step1
 step2
