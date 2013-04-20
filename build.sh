@@ -5,17 +5,24 @@ CPU_COUNT=4                   # The number of CPUs (core) in the system (default
 WXWIDGETS_ADDITIONAL_FLAGS=
 REVISION_APPENDIX=
 
+usage()
+{
+
+	echo "build.sh [-a arch] [-c cpu_count] [-d] [-h]"
+
+}
+
 # Here comes the parameter parsing. Pretty rudimentary, but it works.
 
 while [ "$1" != "" ]; do
 	case $1 in
-		-d | --debug ) BUILD_TYPE=Debug          # The user might select a debug build via this flag
-		               ;;
 		-a | --arch )  shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
 		               BUILD_ARCHITECTURES+=($1)
 		               ;;
-		-c | --cpus )  shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
-		               CPU_COUNT=$1
+	       	-c | --cpus )  shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
+	       		       CPU_COUNT=$1
+	       		       ;;
+		-d | --debug ) BUILD_TYPE=Debug          # The user might select a debug build via this flag
 		               ;;
 		-h | --help )  usage                     # Print the help text
 		               exit 0
