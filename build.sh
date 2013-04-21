@@ -348,7 +348,7 @@ step8()
 	cp -rf $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
 	REVNO=`cd $SOURCE_DIRECTORY/kicad; bzr revno`
 	cd $PACKAGE_DIRECTORY
-	zip -r kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
+	zip -r -y kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
 	cd $SCRIPT_DIRECTORY
 
 }
