@@ -346,7 +346,8 @@ step8()
 	echo "copying kicad data"
 	cp -rf $PREFIX_DIRECTORY/share/kicad/* $PACKAGE_DIRECTORY/KiCad/data
 	cp -rf $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
-	REVNO=`cd $SOURCE_DIRECTORY/kicad; bzr revno`
+	cp -rf $PATCH_DIRECTORY/python $PACKAGE_DIRECTORY/KiCad/
+        REVNO=`cd $SOURCE_DIRECTORY/kicad; bzr revno`
 	cd $PACKAGE_DIRECTORY
 	zip -r -y kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
 	cd $SCRIPT_DIRECTORY
