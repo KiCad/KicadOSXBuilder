@@ -290,7 +290,7 @@ step6()
 	cd $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
 
 	cmake $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY              \
-                                              -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/templates   \
+                                              -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/template   \
                                               -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
                                               -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
 	make install
