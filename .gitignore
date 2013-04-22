@@ -5,6 +5,5 @@ output
 output-debug
 package
 package-debug
-patches
 src
 .DS_Store
