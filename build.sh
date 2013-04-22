@@ -8,7 +8,31 @@ REVISION_APPENDIX=
 usage()
 {
 
-	echo "build.sh [-a arch] [-c cpu_count] [-d] [-h]"
+	echo "usage: build.sh [-a|--arch <architecture_string>] [-c|--cpus <cpu_count>] [-d|--debug] [-h|--help]"
+	echo ""
+	echo "-a / --arch <architecture_string>: specify an architecture to build. You can specify"
+	echo "                                   multiple instaces of this argument to specify multiple architectures. If this argument"
+	echo "                                   is not specified the script will build a universal i386 and x86_64 application."
+	echo ""
+	echo "-c / --cpus <cpu_count>: specify the number of CPUs (or cores) in your system. The"
+	echo "                         build script will spawn twice at much build threads so that your system is optimally"
+	echo "                         used."
+	echo ""
+	echo "-d / --debug: build a debug configuration binary."
+	echo ""
+	echo "-h / --help: show help text."
+	echo ""
+	
+
+}
+
+usage_unknown()
+{
+
+	echo ""
+	echo "`tput bold`Unknown option $1.`tput sgr0`"
+	echo ""
+	usage
 
 }
 
@@ -27,7 +51,7 @@ while [ "$1" != "" ]; do
 		-h | --help )  usage                     # Print the help text
 		               exit 0
 		               ;;
-		* )            usage
+		* )            usage_unknown $1
 		               exit 1
 	esac
 	shift
