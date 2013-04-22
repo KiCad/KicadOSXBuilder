@@ -152,6 +152,7 @@ step1()
 		cd $WXPYTHON_SOURCE_DIRECTORY
 		echo "patching wxpython sources ..."
 		patch -p1 < $PATCH_DIRECTORY/wxpython-2.9.4.0-kicad.patch || exit_on_build_error
+		patch -p1 < $PATCH_DIRECTORY/wxwidgets-2.9.4.0_filehistory_osx.patch || exit_on_build_error
 		cd $SCRIPT_DIRECTORY
 	}
 
@@ -197,6 +198,11 @@ step3()
 
 	export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
 
+	IFS_OLD=$IFS
+	IFS=,
+	UNIVERSAL_BINARY_STRING="${BUILD_ARCHITECTURES[*]}"
+	IFS=$IFS_OLD
+	
 	test -f Makefile ||  $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/configure  --disable-debug            \
 	                                                                             --prefix=$PREFIX_DIRECTORY \
 	                                                                             --enable-unicode	  	\
@@ -214,7 +220,7 @@ step3()
 	                                                                             --enable-monolithic	\
 	                                                                             --enable-svg               \
 	                                                                             --with-expat		\
-	                                                                             --enable-universal-binary  \
+	                                                                             --enable-universal-binary="${UNIVERSAL_BINARY_STRING}" \
 	                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
 
 
