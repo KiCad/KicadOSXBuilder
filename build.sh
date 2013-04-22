@@ -64,9 +64,9 @@ PATCH_DIRECTORY=$SCRIPT_DIRECTORY/patches
 if [ $BUILD_TYPE = Debug ]; then
 	WXWIDGETS_ADDITIONAL_FLAGS=--enable-debug
 	KICAD_BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
-	BUILD_DIRECTORY=$BUILD_DIR-debug
+	BUILD_DIRECTORY=$BUILD_DIRECTORY-debug
 	PREFIX_DIRECTORY=$PREFIX_DIRECTORY-debug
-	PACKAGE_DIRECTORY=$PACKAGE_DIR-debug
+	PACKAGE_DIRECTORY=$PACKAGE_DIRECTORY-debug
 	REVISION_APPENDIX=-debug
 fi
 
@@ -266,7 +266,7 @@ step6()
 	cd $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
 
 	cmake $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY              \
-                                              -DKICAD_TEMPLATES=$PREFIX_DIR/share/kicad/templates   \
+                                              -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/templates   \
                                               -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
                                               -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
 	make install
@@ -278,33 +278,55 @@ step7()
 	STEP_NAME="REPACKAGE *.app"
 	STEP_NUMBER=7
 	print_step_starting_message
-	
-	mkdir -p $PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
 
+	INSTALL_NAME_TOOL="xcrun install_name_tool"
+	KICAD_FRAMEWORKS_PATH="@executable_path/../../../kicad.app/Contents/Frameworks/"
+	
 	PYTHON_SITE_PKGS=$PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/python2.7/site-packages
+	mkdir -p $PYTHON_SITE_PKGS
+
 	FRAMEWORK_LIBS=$PREFIX_DIRECTORY/bin/kicad.app/Contents/Frameworks/
 	
 	PCBNEW_EXES=$PREFIX_DIRECTORY/bin/pcbnew.app/Contents/MacOS
 	KICAD_EXES=$PREFIX_DIRECTORY/bin/kicad.app/Contents/MacOS
 
 	echo "copying kicad libs"
-	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/_pcbnew.so 								$PYTHON_SITE_PKGS
-	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew.py  								$PYTHON_SITE_PKGS
-	cp -rfp $PREFIX_DIRECTORY/lib/libwx*2.9.dylib 			 					$FRAMEWORK_LIBS
+	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/_pcbnew.so 	     $PYTHON_SITE_PKGS
+	cp $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew.py  	     $PYTHON_SITE_PKGS
+	
+	cp -RfP $PREFIX_DIRECTORY/lib/libwx_osx_cocoau-2.9.4.0.0.dylib $FRAMEWORK_LIBS
+	cp -RfP $PREFIX_DIRECTORY/lib/libwx_osx_cocoau_gl-2.9.4.0.0.dylib $FRAMEWORK_LIBS
+	
 	cd $FRAMEWORK_LIBS
-	ln -s libwx_osx_cocoau-2.9.dylib libwx_osx_cocoau-2.9.4.0.0.dylib
-	cd $SCRIPT_DIRECTORY
-	cp -rfp $PREFIX_DIRECTORY/lib/python2.7/site-packages/wx-2.9.4-osx_cocoa/wx   $PYTHON_SITE_PKGS
+	ln -s libwx_osx_cocoau-2.9.4.0.0.dylib libwx_osx_cocoau-2.9.dylib
+	ln -s libwx_osx_cocoau-2.9.4.0.0.dylib libwx_osx_cocoau-2.9.4.dylib
 
+	ln -s libwx_osx_cocoau_gl-2.9.4.0.0.dylib libwx_osx_cocoau_gl-2.9.dylib
+	ln -s libwx_osx_cocoau_gl-2.9.4.0.0.dylib libwx_osx_cocoau_gl-2.9.4.dylib
+
+	$INSTALL_NAME_TOOL -id $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau-2.9.4.0.0.dylib $FRAMEWORK_LIBS/libwx_osx_cocoau-2.9.4.0.0.dylib
+	$INSTALL_NAME_TOOL -id $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau_gl-2.9.4.0.0.dylib $FRAMEWORK_LIBS/libwx_osx_cocoau_gl-2.9.4.0.0.dylib
+	$INSTALL_NAME_TOOL -change $PREFIX_DIRECTORY/lib/libwx_osx_cocoau-2.9.4.0.0.dylib $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau-2.9.4.0.0.dylib $FRAMEWORK_LIBS/libwx_osx_cocoau_gl-2.9.4.0.0.dylib
+
+	cd $SCRIPT_DIRECTORY
+	cp -rf $PREFIX_DIRECTORY/lib/python2.7/site-packages/wx-2.9.4-osx_cocoa/wx   $PYTHON_SITE_PKGS
 
 	for APP in bitmap2component eeschema gerbview pcbnew pcb_calculator kicad cvpcb 
 	do
 		echo repackaging $APP
-		cp -rfp $BUILD_DIRECTORY/$KICAD_DIRECTORY/$APP/$APP.app/Contents/MacOS/$APP $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
-		cp -rfp $SCRIPT_DIRECTORY/patches/loader.sh $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
+		cp -fP $BUILD_DIRECTORY/$KICAD_DIRECTORY/$APP/$APP.app/Contents/MacOS/$APP $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
+		cp -fP $SCRIPT_DIRECTORY/patches/loader.sh $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
 		chmod a+x $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP
+
+		echo "fixing references in $APP"
+		$INSTALL_NAME_TOOL -change $PREFIX_DIRECTORY/lib/libwx_osx_cocoau_gl-2.9.dylib $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau_gl-2.9.dylib $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin
+		$INSTALL_NAME_TOOL -change $PREFIX_DIRECTORY/lib/libwx_osx_cocoau-2.9.dylib $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau-2.9.dylib $PREFIX_DIRECTORY/bin/$APP.app/Contents/MacOS/$APP.bin 		
 	done
 
+	echo "fixing references in wxPython libs"
+	
+	find $PREFIX_DIRECTORY -name "*.so" -exec $INSTALL_NAME_TOOL -change $PREFIX_DIRECTORY/lib/libwx_osx_cocoau-2.9.dylib $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau-2.9.dylib {} \;
+	find $PREFIX_DIRECTORY -name "*.so" -exec $INSTALL_NAME_TOOL -change $PREFIX_DIRECTORY/lib/libwx_osx_cocoau_gl-2.9.dylib $KICAD_FRAMEWORKS_PATH/libwx_osx_cocoau_gl-2.9.dylib {} \;
 
 	cd $SCRIPT_DIRECTORY
 }
@@ -319,18 +341,17 @@ step8()
 	rm -rf $PACKAGE_DIRECTORY
 	mkdir -p $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
 	echo "copying apps"
-	cp -rfp $PREFIX_DIRECTORY/bin/*.app $PACKAGE_DIRECTORY/KiCad
-	cp patches/python $PACKAGE_DIR/KiCad
+	cp -RfP $PREFIX_DIRECTORY/bin/*.app $PACKAGE_DIRECTORY/KiCad
+	cp patches/python $PACKAGE_DIRECTORY/KiCad
 	echo "copying kicad data"
-	cp -rfp $PREFIX_DIRECTORY/share/kicad/* $PACKAGE_DIRECTORY/KiCad/data
-	cp -rfp $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
+	cp -rf $PREFIX_DIRECTORY/share/kicad/* $PACKAGE_DIRECTORY/KiCad/data
+	cp -rf $SOURCE_DIRECTORY/kicad/pcbnew/scripting/plugins/* $PACKAGE_DIRECTORY/KiCad/data/scripting/plugins
 	REVNO=`cd $SOURCE_DIRECTORY/kicad; bzr revno`
 	cd $PACKAGE_DIRECTORY
-	zip -r kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
-	cd $DIR
+	zip -r -y kicad-scripting-osx-$REVNO$REVISION_APPENDIX.zip KiCad/*
+	cd $SCRIPT_DIRECTORY
 
 }
-
 
 step1
 step2
