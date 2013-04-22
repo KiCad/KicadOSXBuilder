@@ -39,7 +39,7 @@ usage_unknown()
 mrproper()
 {
 
-	rm -rf build build-debug output output-debug package package-debug src/wxPython-src-2.9.4.0
+	rm -rdf build build-debug output output-debug package package-debug
 
 }
 
