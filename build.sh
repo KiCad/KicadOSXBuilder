@@ -8,7 +8,37 @@ REVISION_APPENDIX=
 usage()
 {
 
-	echo "build.sh [-a arch] [-c cpu_count] [-d] [-h]"
+	echo "usage: build.sh [-a|--arch <architecture_string>] [-c|--cpus <cpu_count>] [-d|--debug] [-h|--help]"
+	echo ""
+	echo "-a / --arch <architecture_string>: specify an architecture to build. You can specify"
+	echo "                                   multiple instaces of this argument to specify multiple architectures. If this argument"
+	echo "                                   is not specified the script will build a universal i386 and x86_64 application."
+	echo ""
+	echo "-c / --cpus <cpu_count>: specify the number of CPUs (or cores) in your system. The"
+	echo "                         build script will spawn twice at much build threads so that your system is optimally"
+	echo "                         used."
+	echo ""
+	echo "-d / --debug: build a debug configuration binary."
+	echo ""
+	echo "-h / --help: show help text."
+	echo ""
+
+}
+
+usage_unknown()
+{
+
+	echo ""
+	echo "`tput bold`Unknown option $1.`tput sgr0`"
+	echo ""
+	usage
+
+}
+
+mrproper()
+{
+
+	rm -rdf build build-debug output output-debug package package-debug
 
 }
 
@@ -16,19 +46,22 @@ usage()
 
 while [ "$1" != "" ]; do
 	case $1 in
-		-a | --arch )  shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
-		               BUILD_ARCHITECTURES+=($1)
-		               ;;
-	       	-c | --cpus )  shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
-	       		       CPU_COUNT=$1
-	       		       ;;
-		-d | --debug ) BUILD_TYPE=Debug          # The user might select a debug build via this flag
-		               ;;
-		-h | --help )  usage                     # Print the help text
-		               exit 0
-		               ;;
-		* )            usage
-		               exit 1
+		-a | --arch )    shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
+		                 BUILD_ARCHITECTURES+=($1)
+		                 ;;
+		-c | --cpus )    shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
+		                 CPU_COUNT=$1
+		                 ;;
+		-d | --debug )   BUILD_TYPE=Debug          # The user might select a debug build via this flag
+		                 ;;
+		-h | --help )    usage                     # Print the help text
+		                 exit 0
+		                 ;;
+		-m | --mrproper) mrproper                  # clean all build products
+		                 exit 0
+		                 ;;
+		* )              usage_unknown $1
+		                 exit 1
 	esac
 	shift
 done
@@ -118,6 +151,7 @@ step1()
 		cd $WXPYTHON_SOURCE_DIRECTORY
 		echo "patching wxpython sources ..."
 		patch -p1 < $PATCH_DIRECTORY/wxpython-2.9.4.0-kicad.patch || exit_on_build_error
+		patch -p1 < $PATCH_DIRECTORY/wxwidgets-2.9.4.0_filehistory_osx.patch || exit_on_build_error
 		cd $SCRIPT_DIRECTORY
 	}
 
@@ -163,6 +197,11 @@ step3()
 
 	export OSX_ARCH_OPTS=$BUILD_ARCHITECTURES_STRING
 
+	IFS_OLD=$IFS
+	IFS=,
+	UNIVERSAL_BINARY_STRING="${BUILD_ARCHITECTURES[*]}"
+	IFS=$IFS_OLD
+	
 	test -f Makefile ||  $SOURCE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY/configure  --disable-debug            \
 	                                                                             --prefix=$PREFIX_DIRECTORY \
 	                                                                             --enable-unicode	  	\
@@ -180,7 +219,7 @@ step3()
 	                                                                             --enable-monolithic	\
 	                                                                             --enable-svg               \
 	                                                                             --with-expat		\
-	                                                                             --enable-universal-binary  \
+	                                                                             --enable-universal-binary="${UNIVERSAL_BINARY_STRING}" \
 	                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
 
 
@@ -232,23 +271,23 @@ step5()
 	CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING% -arch }
 
 	cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
-                                         	 -DKICAD_SCRIPTING=ON                                              \
-                                         	 -DKICAD_SCRIPTING_MODULES=ON                                      \
-                                         	 -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
-                                         	 -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
-                                         	 -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
-                                         	 -DCMAKE_FIND_FRAMEWORK=LAST                                       \
-                                          	 -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
-                                         	 -DPYTHON_EXECUTABLE=`which python`                                \
-                                         	 -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
-                                         	 -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
-                                         	 -DCMAKE_OSX_ARCHITECTURES="${CMAKE_ARCHITECTURE_STRING}"      \
-                                         	 -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+	                                         -DKICAD_SCRIPTING=ON                                              \
+	                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
+	                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
+	                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
+	                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
+	                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
+	                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
+	                                         -DPYTHON_EXECUTABLE=`which python`                                \
+	                                         -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
+	                                         -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
+	                                         -DCMAKE_OSX_ARCHITECTURES="${CMAKE_ARCHITECTURE_STRING}"          \
+	                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 	#dependencies on swig .i files are not well managed, so if we clear this
 	#then swig rebuilds the .cxx files
-	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
-	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
+	rm -f $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
+	rm -f $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
 
 	make $MAKE_OPTIONS install || exit_on_build_error
 
@@ -266,9 +305,9 @@ step6()
 	cd $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
 
 	cmake $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY              \
-                                              -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/templates   \
-                                              -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
-                                              -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
+	                                            -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/template   \
+	                                            -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
+	                                            -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
 	make install
 	cd $SCRIPT_DIRECTORY
 }
