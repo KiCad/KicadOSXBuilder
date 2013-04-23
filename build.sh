@@ -50,17 +50,17 @@ while [ "$1" != "" ]; do
 		-a | --arch )    shift                     # This flag allow the user to specify a target architcture. There can be multiple occurences of this flag with different architectures.
 		                 BUILD_ARCHITECTURES+=($1)
 		                 ;;
-	       	-c | --cpus )    shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
-	       		         CPU_COUNT=$1
-	       		         ;;
+		-c | --cpus )    shift                     # With this flag the user can supply the ammount of CPUs (cores) in his/her system
+		                 CPU_COUNT=$1
+		                 ;;
 		-d | --debug )   BUILD_TYPE=Debug          # The user might select a debug build via this flag
 		                 ;;
 		-h | --help )    usage                     # Print the help text
 		                 exit 0
 		                 ;;
-		-m | --mrproper) mrproper		   # clean all build products
-				 exit 0
-			         ;;
+		-m | --mrproper) mrproper                  # clean all build products
+		                 exit 0
+		                 ;;
 		* )              usage_unknown $1
 		                 exit 1
 	esac
@@ -272,23 +272,23 @@ step5()
 	CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING% -arch }
 
 	cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
-                                         	 -DKICAD_SCRIPTING=ON                                              \
-                                         	 -DKICAD_SCRIPTING_MODULES=ON                                      \
-                                         	 -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
-                                         	 -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
-                                         	 -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
-                                         	 -DCMAKE_FIND_FRAMEWORK=LAST                                       \
-                                          	 -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
-                                         	 -DPYTHON_EXECUTABLE=`which python`                                \
-                                         	 -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
-                                         	 -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
-                                         	 -DCMAKE_OSX_ARCHITECTURES="${CMAKE_ARCHITECTURE_STRING}"      \
-                                         	 -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+	                                         -DKICAD_SCRIPTING=ON                                              \
+	                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
+	                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
+	                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
+	                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
+	                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
+	                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
+	                                         -DPYTHON_EXECUTABLE=`which python`                                \
+	                                         -DPYTHON_SITE_PACKAGE_PATH=$PREFIX_DIRECTORY/python/site-packages \
+	                                         -DPYTHON_PACKAGES_PATH=$PREFIX_DIRECTORY/python/site-packages     \
+	                                         -DCMAKE_OSX_ARCHITECTURES="${OSX_ARCHITECTURES}"                  \
+	                                         -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
 	#dependencies on swig .i files are not well managed, so if we clear this
 	#then swig rebuilds the .cxx files
-	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
-	rm $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
+	rm -f $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/pcbnew_wrap.cxx
+	rm -f $BUILD_DIRECTORY/$KICAD_DIRECTORY/pcbnew/scripting/pcbnewPYTHON_wrap.cxx
 
 	make $MAKE_OPTIONS install || exit_on_build_error
 
@@ -306,9 +306,9 @@ step6()
 	cd $BUILD_DIRECTORY/$LIBRARY_DIRECTORY
 
 	cmake $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY/ -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY              \
-                                              -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/template   \
-                                              -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
-                                              -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
+	                                            -DKICAD_TEMPLATES=$PREFIX_DIRECTORY/share/kicad/template   \
+	                                            -DKICAD_MODULES=$PREFIX_DIRECTORY/share/kicad/modules \
+	                                            -DKICAD_LIBRARY=$PREFIX_DIRECTORY/share/kicad/library
 	make install
 	cd $SCRIPT_DIRECTORY
 }
