@@ -360,6 +360,7 @@ step5()
 	                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
 	                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
 	                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
+                                                 -DCMAKE_ASM_FLAGS="-arch i386 -arch x86_64"                       \
 	                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
 	                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
 	                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
