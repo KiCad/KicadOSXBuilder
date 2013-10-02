@@ -270,7 +270,6 @@ step2()
 	STEP_NUMBER=2
 	print_step_starting_message
 
-	# test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~cern-kicad/kicad/testing kicad ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch $KICAD_BRANCH kicad ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
@@ -360,12 +359,12 @@ step5()
 	mkdir -p $PREFIX_DIRECTORY/python/site-packages
 
 	CMAKE_ARCHITECTURE_STRING=
-    CMAKE_ASM_FLAGS=
+        CMAKE_ASM_FLAGS=
 
 	for ARCHITECTURE in "${BUILD_ARCHITECTURES[@]}"
 	do
 		CMAKE_ARCHITECTURE_STRING=$CMAKE_ARCHITECTURE_STRING"${ARCHITECTURE};"
-        CMAKE_ASM_FLAGS=$CMAKE_ASM_FLAGS" -arch ${ARCHITECTURE}"
+                CMAKE_ASM_FLAGS=$CMAKE_ASM_FLAGS" -arch ${ARCHITECTURE}"
 	done
 	CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING%;}
 
@@ -374,7 +373,7 @@ step5()
 	                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
 	                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
 	                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
-                                             -DCMAKE_ASM_FLAGS="${CMAKE_ASM_FLAGS}"                            \
+                                                 -DCMAKE_ASM_FLAGS="${CMAKE_ASM_FLAGS}"                            \
 	                                         -DCMAKE_INSTALL_PREFIX=$PREFIX_DIRECTORY                          \
 	                                         -DCMAKE_FIND_FRAMEWORK=LAST                                       \
 	                                         -DwxWidgets_CONFIG_EXECUTABLE=$PREFIX_DIRECTORY/bin/wx-config     \
