@@ -9,7 +9,8 @@ CPU_COUNT=4                   # The number of CPUs (core) in the system (default
 KICAD_DIRECTORY=kicad
 LIBRARY_DIRECTORY=library
 
-WXPYTHON_VERSION=2.9.4.0
+# WXPYTHON_VERSION=2.9.4.0
+WXPYTHON_VERSION=2.9.5.0
 WXPYTHON_SOURCE_DIRECTORY=wxPython-src-$WXPYTHON_VERSION
 WXPYTHON_DOWNLOAD_URL=http://downloads.sourceforge.net/project/wxpython/wxPython/$WXPYTHON_VERSION/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2
 
@@ -237,8 +238,8 @@ step1()
 		tar xfj $ARCHIVE_DIRECTORY/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2 || exit_on_build_error
 		cd $WXPYTHON_SOURCE_DIRECTORY
 		echo "patching wxpython sources ..."
-		patch -p1 < $PATCH_DIRECTORY/wxpython-2.9.4.0-kicad.patch || exit_on_build_error
-		patch -p1 < $PATCH_DIRECTORY/wxwidgets-2.9.4.0_filehistory_osx.patch || exit_on_build_error
+		patch -p1 < $PATCH_DIRECTORY/wxpython-${WXPYTHON_VERSION}-kicad.patch || exit_on_build_error
+		patch -p1 < $PATCH_DIRECTORY/wxwidgets-${WXPYTHON_VERSION}_filehistory_osx.patch || exit_on_build_error
 		cd $SCRIPT_DIRECTORY
 	}
 
