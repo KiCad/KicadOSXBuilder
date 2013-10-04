@@ -1,8 +1,8 @@
 diff --git a/Makefile.in b/Makefile.in
-index c9f05f8..913fb43 100644
+index 5192fc8..285dd6d 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -14295,7 +14295,7 @@ COND_PLATFORM_MACOSX_1___OSX_CARBON_COCOA_SRC_OBJECTS =  \
+@@ -14598,7 +14598,7 @@ COND_PLATFORM_MACOSX_1___OSX_CARBON_COCOA_SRC_OBJECTS =  \
  	monodll_carbon_frame.o \
  	monodll_carbon_mdi.o \
  	monodll_carbon_metafile.o \
@@ -11,7 +11,7 @@ index c9f05f8..913fb43 100644
  	monodll_carbon_popupwin.o \
  	monodll_carbon_renderer.o \
  	monodll_carbon_settings.o \
-@@ -17281,6 +17281,9 @@ monodll_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONODLL_OD
+@@ -17762,6 +17762,9 @@ monodll_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONODLL_OD
  monodll_osx_cocoa_notebook.o: $(srcdir)/src/osx/cocoa/notebook.mm $(MONODLL_ODEP)
  	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/notebook.mm
  
@@ -21,7 +21,7 @@ index c9f05f8..913fb43 100644
  monodll_osx_cocoa_radiobut.o: $(srcdir)/src/osx/cocoa/radiobut.mm $(MONODLL_ODEP)
  	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/radiobut.mm
  
-@@ -22891,6 +22894,9 @@ monolib_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONOLIB_OD
+@@ -23630,6 +23633,9 @@ monolib_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONOLIB_OD
  monolib_osx_cocoa_notebook.o: $(srcdir)/src/osx/cocoa/notebook.mm $(MONOLIB_ODEP)
  	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/notebook.mm
  
@@ -32,10 +32,10 @@ index c9f05f8..913fb43 100644
  	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/radiobut.mm
  
 diff --git a/configure b/configure
-index ec0570a..e0418e8 100755
+index 7dea459..0debd2a 100755
 --- a/configure
 +++ b/configure
-@@ -19177,7 +19177,7 @@ $as_echo "$as_me: WARNING: --enable-macosx_arch is ignored when --enable-univers
+@@ -19437,7 +19437,7 @@ $as_echo "$as_me: WARNING: --enable-macosx_arch is ignored when --enable-univers
  
      if test "x$wxUSE_UNIVERSAL_BINARY" != xyes; then
          OSX_ARCH_OPTS=$wxUSE_UNIVERSAL_BINARY
@@ -45,10 +45,10 @@ index ec0570a..e0418e8 100755
              OSX_ARCH_OPTS="$OSX_ARCH_OPTS,x86_64"
          fi
 diff --git a/include/wx/event.h b/include/wx/event.h
-index faf728e..5fb693d 100644
+index 874d42e..87d6dff 100644
 --- a/include/wx/event.h
 +++ b/include/wx/event.h
-@@ -707,6 +707,7 @@ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX1_DCLICK, wxMouseEvent);
+@@ -717,6 +717,7 @@ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX1_DCLICK, wxMouseEvent);
  wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_DOWN, wxMouseEvent);
  wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_UP, wxMouseEvent);
  wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_DCLICK, wxMouseEvent);
@@ -56,7 +56,7 @@ index faf728e..5fb693d 100644
  
      // Character input event type
  wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_CHAR, wxKeyEvent);
-@@ -1503,6 +1504,8 @@ public:
+@@ -1719,6 +1720,8 @@ public:
      bool Aux1DClick() const { return (m_eventType == wxEVT_AUX1_DCLICK); }
      bool Aux2DClick() const { return (m_eventType == wxEVT_AUX2_DCLICK); }
  
@@ -65,7 +65,7 @@ index faf728e..5fb693d 100644
      // True if a button is down and the mouse is moving
      bool Dragging() const
      {
-@@ -1553,6 +1556,8 @@ public:
+@@ -1773,6 +1776,8 @@ public:
      // Is the system set to do page scrolling?
      bool IsPageScroll() const { return ((unsigned int)m_linesPerAction == UINT_MAX); }
  
@@ -74,16 +74,16 @@ index faf728e..5fb693d 100644
      virtual wxEvent *Clone() const { return new wxMouseEvent(*this); }
      virtual wxEventCategory GetEventCategory() const { return wxEVT_CATEGORY_USER_INPUT; }
  
-@@ -1570,6 +1575,8 @@ public:
-     int           m_wheelRotation;
-     int           m_wheelDelta;
+@@ -1792,6 +1797,8 @@ public:
      int           m_linesPerAction;
-+    
-+    float         m_magnification;
+     int           m_columnsPerAction;
  
++    float         m_magnification;
++
  protected:
      void Assign(const wxMouseEvent& evt);
-@@ -3886,6 +3893,7 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
+ 
+@@ -4163,6 +4170,7 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
  #define EVT_MOUSE_AUX2_DOWN(func) wx__DECLARE_EVT0(wxEVT_AUX2_DOWN, wxMouseEventHandler(func))
  #define EVT_MOUSE_AUX2_UP(func) wx__DECLARE_EVT0(wxEVT_AUX2_UP, wxMouseEventHandler(func))
  #define EVT_MOUSE_AUX2_DCLICK(func) wx__DECLARE_EVT0(wxEVT_AUX2_DCLICK, wxMouseEventHandler(func))
@@ -91,7 +91,7 @@ index faf728e..5fb693d 100644
  
  // All mouse events
  #define EVT_MOUSE_EVENTS(func) \
-@@ -3907,7 +3915,8 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
+@@ -4184,7 +4192,8 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
      EVT_MOTION(func) \
      EVT_LEAVE_WINDOW(func) \
      EVT_ENTER_WINDOW(func) \
@@ -102,7 +102,7 @@ index faf728e..5fb693d 100644
  // Scrolling from wxWindow (sent to wxScrolledWindow)
  #define EVT_SCROLLWIN_TOP(func) wx__DECLARE_EVT0(wxEVT_SCROLLWIN_TOP, wxScrollWinEventHandler(func))
 diff --git a/include/wx/overlay.h b/include/wx/overlay.h
-index 7f29b4f..ae43afc 100644
+index 2c00fcb..5bcc8ee 100644
 --- a/include/wx/overlay.h
 +++ b/include/wx/overlay.h
 @@ -14,7 +14,7 @@
@@ -115,7 +115,7 @@ index 7f29b4f..ae43afc 100644
  #elif defined(__WXDFB__)
      #define wxHAS_NATIVE_OVERLAY 1
 diff --git a/include/wx/private/overlay.h b/include/wx/private/overlay.h
-index 6b85653..9c2e7db 100644
+index fa6b3db..20c917f 100644
 --- a/include/wx/private/overlay.h
 +++ b/include/wx/private/overlay.h
 @@ -17,7 +17,11 @@
@@ -132,10 +132,10 @@ index 6b85653..9c2e7db 100644
      #include "wx/dfb/private/overlay.h"
  #else
 diff --git a/src/common/event.cpp b/src/common/event.cpp
-index e2423f0..aa3200f 100644
+index c9e8f11..9fd4a3e 100644
 --- a/src/common/event.cpp
 +++ b/src/common/event.cpp
-@@ -207,6 +207,7 @@ wxDEFINE_EVENT( wxEVT_AUX1_DCLICK, wxMouseEvent );
+@@ -208,6 +208,7 @@ wxDEFINE_EVENT( wxEVT_AUX1_DCLICK, wxMouseEvent );
  wxDEFINE_EVENT( wxEVT_AUX2_DOWN, wxMouseEvent );
  wxDEFINE_EVENT( wxEVT_AUX2_UP, wxMouseEvent );
  wxDEFINE_EVENT( wxEVT_AUX2_DCLICK, wxMouseEvent );
@@ -143,18 +143,18 @@ index e2423f0..aa3200f 100644
  
  // Character input event type
  wxDEFINE_EVENT( wxEVT_CHAR, wxKeyEvent );
-@@ -558,6 +559,8 @@ wxMouseEvent::wxMouseEvent(wxEventType commandType)
-     m_wheelRotation = 0;
+@@ -569,6 +570,8 @@ wxMouseEvent::wxMouseEvent(wxEventType commandType)
      m_wheelDelta = 0;
      m_linesPerAction = 0;
-+    
+     m_columnsPerAction = 0;
++
 +    m_magnification = 0.0f;
  }
  
  void wxMouseEvent::Assign(const wxMouseEvent& event)
-@@ -581,6 +584,8 @@ void wxMouseEvent::Assign(const wxMouseEvent& event)
-     m_wheelDelta = event.m_wheelDelta;
+@@ -593,6 +596,8 @@ void wxMouseEvent::Assign(const wxMouseEvent& event)
      m_linesPerAction = event.m_linesPerAction;
+     m_columnsPerAction = event.m_columnsPerAction;
      m_wheelAxis = event.m_wheelAxis;
 +    
 +    m_magnification = event.m_magnification;
@@ -162,7 +162,7 @@ index e2423f0..aa3200f 100644
  
  // return true if was a button dclick event
 diff --git a/src/osx/cocoa/overlay.mm b/src/osx/cocoa/overlay.mm
-index 1ec5a95..3d8db42 100644
+index b941a05..9c6be20 100644
 --- a/src/osx/cocoa/overlay.mm
 +++ b/src/osx/cocoa/overlay.mm
 @@ -35,6 +35,7 @@
@@ -329,10 +329,10 @@ index 1ec5a95..3d8db42 100644
  }
  
 diff --git a/src/osx/cocoa/window.mm b/src/osx/cocoa/window.mm
-index adb5a24..99b5d2f 100644
+index a12de97..89a090d 100644
 --- a/src/osx/cocoa/window.mm
 +++ b/src/osx/cocoa/window.mm
-@@ -656,6 +656,12 @@ void wxWidgetCocoaImpl::SetupMouseEvent( wxMouseEvent &wxevent , NSEvent * nsEve
+@@ -713,6 +713,12 @@ void wxWidgetCocoaImpl::SetupMouseEvent( wxMouseEvent &wxevent , NSEvent * nsEve
          case NSMouseMoved :
              wxevent.SetEventType( wxEVT_MOTION ) ;
              break;
@@ -345,7 +345,7 @@ index adb5a24..99b5d2f 100644
          default :
              break ;
      }
-@@ -1484,6 +1490,10 @@ void wxOSXCocoaClassAddWXMethods(Class c)
+@@ -1599,6 +1605,10 @@ void wxOSXCocoaClassAddWXMethods(Class c)
      wxOSX_CLASS_ADD_METHOD(c, @selector(scrollWheel:), (IMP) wxOSX_mouseEvent, "v@:@" )
      wxOSX_CLASS_ADD_METHOD(c, @selector(mouseEntered:), (IMP) wxOSX_mouseEvent, "v@:@" )
      wxOSX_CLASS_ADD_METHOD(c, @selector(mouseExited:), (IMP) wxOSX_mouseEvent, "v@:@" )
@@ -371,12 +371,12 @@ index 72eb31f..2f88ade 100644
 +WXPORT="osx_cocoa"
 +MONOLITHIC=1
 diff --git a/wxPython/src/wx.pth b/wxPython/src/wx.pth
-index 2a3910f..60cdf85 100644
+index 5d012b0..fb6edaa 100644
 --- a/wxPython/src/wx.pth
 +++ b/wxPython/src/wx.pth
 @@ -1 +1 @@
--wx-2.9.4-gtk2
-+wx-2.9.4-osx_cocoa
+-wx-2.9.5-gtk2
++wx-2.9.5-osx_cocoa
 diff --git a/wxPython/wx/build/build_options.py b/wxPython/wx/build/build_options.py
 index 72eb31f..2f88ade 100644
 --- a/wxPython/wx/build/build_options.py

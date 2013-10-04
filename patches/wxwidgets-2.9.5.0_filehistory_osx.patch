@@ -1,6 +1,8 @@
---- a/src/common/filehistorycmn.cpp	2013-04-22 15:29:41.000000000 -0400
-+++ b/src/common/filehistorycmn.cpp	2013-04-22 15:16:46.000000000 -0400
-@@ -47,11 +47,21 @@
+diff --git a/src/common/filehistorycmn.cpp b/src/common/filehistorycmn.cpp
+index 5493146..1264ad6 100644
+--- a/src/common/filehistorycmn.cpp
++++ b/src/common/filehistorycmn.cpp
+@@ -47,11 +47,21 @@ namespace
  // NB: the index n is 0-based, as usual, but the strings start from 1
  wxString GetMRUEntryLabel(int n, const wxString& path)
  {
