@@ -7,9 +7,11 @@ MAKE_THREAD_COUNT=0           # The number of threads for make to use
 CPU_COUNT=4                   # The number of CPUs (core) in the system (defaults to 4)
 
 KICAD_DIRECTORY=kicad
+KICAD_BRANCH="lp:~cern-kicad/kicad/testing"
+# KICAD_BRANCH="lp:kicad"
+# KICAD_BRANCH="lp:~kicad-testing-committers/kicad/testing"
 LIBRARY_DIRECTORY=library
 
-# WXPYTHON_VERSION=2.9.4.0
 WXPYTHON_VERSION_MAJOR=2.9
 # WXPYTHON_VERSION_MINOR=5
 WXPYTHON_VERSION_MINOR=4
@@ -268,7 +270,8 @@ step2()
 	STEP_NUMBER=2
 	print_step_starting_message
 
-	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~cern-kicad/kicad/testing kicad ; cd ..) || exit_on_build_error
+	# test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~cern-kicad/kicad/testing kicad ; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch $KICAD_BRANCH kicad ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
 	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
