@@ -1,0 +1,393 @@
+diff --git a/Makefile.in b/Makefile.in
+index 5192fc8..285dd6d 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -14598,7 +14598,7 @@ COND_PLATFORM_MACOSX_1___OSX_CARBON_COCOA_SRC_OBJECTS =  \
+ 	monodll_carbon_frame.o \
+ 	monodll_carbon_mdi.o \
+ 	monodll_carbon_metafile.o \
+-	monodll_carbon_overlay.o \
++	monodll_osx_cocoa_overlay.o \
+ 	monodll_carbon_popupwin.o \
+ 	monodll_carbon_renderer.o \
+ 	monodll_carbon_settings.o \
+@@ -17762,6 +17762,9 @@ monodll_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONODLL_OD
+ monodll_osx_cocoa_notebook.o: $(srcdir)/src/osx/cocoa/notebook.mm $(MONODLL_ODEP)
+ 	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/notebook.mm
+ 
++monodll_osx_cocoa_overlay.o: $(srcdir)/src/osx/cocoa/overlay.mm $(MONODLL_ODEP)
++	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/overlay.mm
++
+ monodll_osx_cocoa_radiobut.o: $(srcdir)/src/osx/cocoa/radiobut.mm $(MONODLL_ODEP)
+ 	$(CXXC) -c -o $@ $(MONODLL_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/radiobut.mm
+ 
+@@ -23630,6 +23633,9 @@ monolib_cocoa_nonownedwnd.o: $(srcdir)/src/osx/cocoa/nonownedwnd.mm $(MONOLIB_OD
+ monolib_osx_cocoa_notebook.o: $(srcdir)/src/osx/cocoa/notebook.mm $(MONOLIB_ODEP)
+ 	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/notebook.mm
+ 
++monolib_osx_cocoa_overlay.o: $(srcdir)/src/osx/cocoa/overlay.mm $(MONOLIB_ODEP)
++	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/overlay.mm
++
+ monolib_osx_cocoa_radiobut.o: $(srcdir)/src/osx/cocoa/radiobut.mm $(MONOLIB_ODEP)
+ 	$(CXXC) -c -o $@ $(MONOLIB_OBJCXXFLAGS) $(srcdir)/src/osx/cocoa/radiobut.mm
+ 
+diff --git a/configure b/configure
+index 7dea459..0debd2a 100755
+--- a/configure
++++ b/configure
+@@ -19437,7 +19437,7 @@ $as_echo "$as_me: WARNING: --enable-macosx_arch is ignored when --enable-univers
+ 
+     if test "x$wxUSE_UNIVERSAL_BINARY" != xyes; then
+         OSX_ARCH_OPTS=$wxUSE_UNIVERSAL_BINARY
+-    else         OSX_ARCH_OPTS="ppc,i386"
++    else         OSX_ARCH_OPTS="i386"
+         if test "$wxUSE_OSX_COCOA" = 1; then
+             OSX_ARCH_OPTS="$OSX_ARCH_OPTS,x86_64"
+         fi
+diff --git a/include/wx/event.h b/include/wx/event.h
+index 874d42e..87d6dff 100644
+--- a/include/wx/event.h
++++ b/include/wx/event.h
+@@ -717,6 +717,7 @@ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX1_DCLICK, wxMouseEvent);
+ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_DOWN, wxMouseEvent);
+ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_UP, wxMouseEvent);
+ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_AUX2_DCLICK, wxMouseEvent);
++wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_MAGNIFY, wxMouseEvent);
+ 
+     // Character input event type
+ wxDECLARE_EXPORTED_EVENT(WXDLLIMPEXP_CORE, wxEVT_CHAR, wxKeyEvent);
+@@ -1719,6 +1720,8 @@ public:
+     bool Aux1DClick() const { return (m_eventType == wxEVT_AUX1_DCLICK); }
+     bool Aux2DClick() const { return (m_eventType == wxEVT_AUX2_DCLICK); }
+ 
++    bool Magnify() const { return (m_eventType == wxEVT_MAGNIFY); }
++
+     // True if a button is down and the mouse is moving
+     bool Dragging() const
+     {
+@@ -1773,6 +1776,8 @@ public:
+     // Is the system set to do page scrolling?
+     bool IsPageScroll() const { return ((unsigned int)m_linesPerAction == UINT_MAX); }
+ 
++    float GetMagnification() const { return m_magnification; }
++    
+     virtual wxEvent *Clone() const { return new wxMouseEvent(*this); }
+     virtual wxEventCategory GetEventCategory() const { return wxEVT_CATEGORY_USER_INPUT; }
+ 
+@@ -1792,6 +1797,8 @@ public:
+     int           m_linesPerAction;
+     int           m_columnsPerAction;
+ 
++    float         m_magnification;
++
+ protected:
+     void Assign(const wxMouseEvent& evt);
+ 
+@@ -4163,6 +4170,7 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
+ #define EVT_MOUSE_AUX2_DOWN(func) wx__DECLARE_EVT0(wxEVT_AUX2_DOWN, wxMouseEventHandler(func))
+ #define EVT_MOUSE_AUX2_UP(func) wx__DECLARE_EVT0(wxEVT_AUX2_UP, wxMouseEventHandler(func))
+ #define EVT_MOUSE_AUX2_DCLICK(func) wx__DECLARE_EVT0(wxEVT_AUX2_DCLICK, wxMouseEventHandler(func))
++#define EVT_MAGNIFY(func) wx__DECLARE_EVT0(wxEVT_MAGNIFY, wxMouseEventHandler(func))
+ 
+ // All mouse events
+ #define EVT_MOUSE_EVENTS(func) \
+@@ -4184,7 +4192,8 @@ typedef void (wxEvtHandler::*wxClipboardTextEventFunction)(wxClipboardTextEvent&
+     EVT_MOTION(func) \
+     EVT_LEAVE_WINDOW(func) \
+     EVT_ENTER_WINDOW(func) \
+-    EVT_MOUSEWHEEL(func)
++    EVT_MOUSEWHEEL(func) \
++    EVT_MAGNIFY(func)
+ 
+ // Scrolling from wxWindow (sent to wxScrolledWindow)
+ #define EVT_SCROLLWIN_TOP(func) wx__DECLARE_EVT0(wxEVT_SCROLLWIN_TOP, wxScrollWinEventHandler(func))
+diff --git a/include/wx/overlay.h b/include/wx/overlay.h
+index 2c00fcb..5bcc8ee 100644
+--- a/include/wx/overlay.h
++++ b/include/wx/overlay.h
+@@ -14,7 +14,7 @@
+ 
+ #include "wx/defs.h"
+ 
+-#if defined(__WXMAC__) && wxOSX_USE_CARBON
++#if defined(__WXMAC__) && wxOSX_USE_COCOA_OR_CARBON
+     #define wxHAS_NATIVE_OVERLAY 1
+ #elif defined(__WXDFB__)
+     #define wxHAS_NATIVE_OVERLAY 1
+diff --git a/include/wx/private/overlay.h b/include/wx/private/overlay.h
+index fa6b3db..20c917f 100644
+--- a/include/wx/private/overlay.h
++++ b/include/wx/private/overlay.h
+@@ -17,7 +17,11 @@
+ #ifdef wxHAS_NATIVE_OVERLAY
+ 
+ #if defined(__WXMAC__)
+-    #include "wx/osx/carbon/private/overlay.h"
++#if wxOSX_USE_CARBON
++     #include "wx/osx/carbon/private/overlay.h"
++#else
++    #include "wx/osx/cocoa/private/overlay.h"
++#endif
+ #elif defined(__WXDFB__)
+     #include "wx/dfb/private/overlay.h"
+ #else
+diff --git a/src/common/event.cpp b/src/common/event.cpp
+index c9e8f11..9fd4a3e 100644
+--- a/src/common/event.cpp
++++ b/src/common/event.cpp
+@@ -208,6 +208,7 @@ wxDEFINE_EVENT( wxEVT_AUX1_DCLICK, wxMouseEvent );
+ wxDEFINE_EVENT( wxEVT_AUX2_DOWN, wxMouseEvent );
+ wxDEFINE_EVENT( wxEVT_AUX2_UP, wxMouseEvent );
+ wxDEFINE_EVENT( wxEVT_AUX2_DCLICK, wxMouseEvent );
++wxDEFINE_EVENT( wxEVT_MAGNIFY, wxMouseEvent );
+ 
+ // Character input event type
+ wxDEFINE_EVENT( wxEVT_CHAR, wxKeyEvent );
+@@ -569,6 +570,8 @@ wxMouseEvent::wxMouseEvent(wxEventType commandType)
+     m_wheelDelta = 0;
+     m_linesPerAction = 0;
+     m_columnsPerAction = 0;
++
++    m_magnification = 0.0f;
+ }
+ 
+ void wxMouseEvent::Assign(const wxMouseEvent& event)
+@@ -593,6 +596,8 @@ void wxMouseEvent::Assign(const wxMouseEvent& event)
+     m_linesPerAction = event.m_linesPerAction;
+     m_columnsPerAction = event.m_columnsPerAction;
+     m_wheelAxis = event.m_wheelAxis;
++    
++    m_magnification = event.m_magnification;
+ }
+ 
+ // return true if was a button dclick event
+diff --git a/src/osx/cocoa/overlay.mm b/src/osx/cocoa/overlay.mm
+index b941a05..9c6be20 100644
+--- a/src/osx/cocoa/overlay.mm
++++ b/src/osx/cocoa/overlay.mm
+@@ -35,6 +35,7 @@
+ #include "wx/private/overlay.h"
+ 
+ #ifdef wxHAS_NATIVE_OVERLAY
++#import <Foundation/NSGeometry.h>
+ 
+ // ============================================================================
+ // implementation
+@@ -59,48 +60,6 @@ bool wxOverlayImpl::IsOk()
+ 
+ void wxOverlayImpl::CreateOverlayWindow()
+ {
+-    if ( m_window )
+-    {
+-        m_overlayParentWindow = m_window->MacGetTopLevelWindowRef();
+-        [m_overlayParentWindow makeKeyAndOrderFront:nil];
+-        
+-        NSView* view = m_window->GetHandle();
+-
+-        NSPoint viewOriginBase, viewOriginScreen;
+-        viewOriginBase = [view convertPoint:NSMakePoint(0, 0) toView:nil];
+-        viewOriginScreen = [m_overlayParentWindow convertBaseToScreen:viewOriginBase];
+-        
+-        NSSize viewSize = [view frame].size;
+-        if ( [view isFlipped] )
+-            viewOriginScreen.y -= viewSize.height;
+-        
+-        m_overlayWindow=[[NSWindow alloc] initWithContentRect:NSMakeRect(viewOriginScreen.x,viewOriginScreen.y,
+-                                                                         viewSize.width,
+-                                                                         viewSize.height) 
+-                                                    styleMask:NSBorderlessWindowMask 
+-                                                      backing:NSBackingStoreBuffered 
+-                                                        defer:YES];
+-        
+-        [m_overlayParentWindow addChildWindow:m_overlayWindow ordered:NSWindowAbove];
+-    }
+-    else
+-    {
+-        m_overlayParentWindow = NULL ;
+-        CGRect cgbounds ;
+-        cgbounds = CGDisplayBounds(CGMainDisplayID());
+- 
+-        m_overlayWindow=[[NSWindow alloc] initWithContentRect:NSMakeRect(cgbounds.origin.x,cgbounds.origin.y,
+-                                                                       cgbounds.size.width,
+-                                                                       cgbounds.size.height) 
+-                                                  styleMask:NSBorderlessWindowMask 
+-                                                    backing:NSBackingStoreBuffered 
+-                                                      defer:YES];
+-    }
+-    [m_overlayWindow setOpaque:NO];
+-    [m_overlayWindow setIgnoresMouseEvents:YES];
+-    [m_overlayWindow setAlphaValue:1.0];
+-    
+-    [m_overlayWindow orderFront:nil];
+ }
+ 
+ void wxOverlayImpl::Init( wxDC* dc, int x , int y , int width , int height )
+@@ -108,84 +67,50 @@ void wxOverlayImpl::Init( wxDC* dc, int x , int y , int width , int height )
+     wxASSERT_MSG( !IsOk() , _("You cannot Init an overlay twice") );
+ 
+     m_window = dc->GetWindow();
+-    m_x = x ;
+-    m_y = y ;
+-    if ( dc->IsKindOf( CLASSINFO( wxClientDC ) ))
+-    {
+-        wxPoint origin = m_window->GetClientAreaOrigin();
+-        m_x += origin.x;
+-        m_y += origin.y;
+-    }
+-    m_width = width ;
+-    m_height = height ;
+-
+-    CreateOverlayWindow();
+-    wxASSERT_MSG(  m_overlayWindow != NULL , _("Couldn't create the overlay window") );
+-    m_overlayContext = (CGContextRef) [[m_overlayWindow graphicsContext] graphicsPort];
+-    wxASSERT_MSG(  m_overlayContext != NULL , _("Couldn't init the context on the overlay window") );
+-
+-    int ySize = 0;
+-    if ( m_window )
+-    {
+-        NSView* view = m_window->GetHandle();    
+-        NSSize viewSize = [view frame].size;
+-        ySize = viewSize.height;
+-    }
+-    else
+-    {
+-        CGRect cgbounds ;
+-        cgbounds = CGDisplayBounds(CGMainDisplayID());
+-        ySize = cgbounds.size.height;
+-        
+-        
+-        
+-    }
+-    CGContextTranslateCTM( m_overlayContext, 0, ySize );
+-    CGContextScaleCTM( m_overlayContext, 1, -1 );
+-    CGContextTranslateCTM( m_overlayContext, -m_x , -m_y );
++	m_overlayWindow = m_window->MacGetTopLevelWindowRef();
++	
++	NSRect box = [m_overlayWindow frame];
++	
++	if( [m_overlayWindow isVisible] ) 	
++	{
++		[m_overlayWindow discardCachedImage];
++		[m_overlayWindow cacheImageInRect:box];
++	}
+ }
+ 
+ void wxOverlayImpl::BeginDrawing( wxDC* dc)
+ {
+-    wxDCImpl *impl = dc->GetImpl();
+-    wxGCDCImpl *win_impl = wxDynamicCast(impl,wxGCDCImpl);
+-    if (win_impl)
+-    {
+-        win_impl->SetGraphicsContext( wxGraphicsContext::CreateFromNative( m_overlayContext ) );
+-        dc->SetClippingRegion( m_x , m_y , m_width , m_height ) ;
+-    }
++
+ }
+ 
+ void wxOverlayImpl::EndDrawing( wxDC* dc)
+ {
+-    wxDCImpl *impl = dc->GetImpl();
+-    wxGCDCImpl *win_impl = wxDynamicCast(impl,wxGCDCImpl);
+-    if (win_impl)
+-        win_impl->SetGraphicsContext(NULL);
+-
+-    CGContextFlush( m_overlayContext );
+ }
+ 
+ void wxOverlayImpl::Clear(wxDC* WXUNUSED(dc))
+ {
+     wxASSERT_MSG( IsOk() , _("You cannot Clear an overlay that is not inited") );
+-    CGRect box  = CGRectMake( m_x - 1, m_y - 1 , m_width + 2 , m_height + 2 );
+-    CGContextClearRect( m_overlayContext, box );
++	if( [m_overlayWindow isVisible] ) 
++	{
++		[m_overlayWindow restoreCachedImage];
++//		[m_overlayWindow flushWindow]; 
++	}
+ }
+ 
+ void wxOverlayImpl::Reset()
+ {
+-    if ( m_overlayContext )
++    if ( m_overlayContext)
+     {
+         m_overlayContext = NULL ;
+     }
+ 
+     // todo : don't dispose, only hide and reposition on next run
+-    if (m_overlayWindow)
++    if (m_overlayWindow &&  [m_overlayWindow isVisible])
+     {
+-        [m_overlayParentWindow removeChildWindow:m_overlayWindow];
+-        [m_overlayWindow release];
+-        m_overlayWindow = NULL ;
++		NSRect box = [m_overlayWindow frame];
++		
++		[m_overlayWindow discardCachedImage];
++		[m_overlayWindow cacheImageInRect:box];
+     }
+ }
+ 
+diff --git a/src/osx/cocoa/window.mm b/src/osx/cocoa/window.mm
+index a12de97..89a090d 100644
+--- a/src/osx/cocoa/window.mm
++++ b/src/osx/cocoa/window.mm
+@@ -713,6 +713,12 @@ void wxWidgetCocoaImpl::SetupMouseEvent( wxMouseEvent &wxevent , NSEvent * nsEve
+         case NSMouseMoved :
+             wxevent.SetEventType( wxEVT_MOTION ) ;
+             break;
++        
++        case NSEventTypeMagnify:
++            wxevent.SetEventType( wxEVT_MAGNIFY );
++            wxevent.m_magnification = [nsEvent magnification];
++            break;
++            
+         default :
+             break ;
+     }
+@@ -1599,6 +1605,10 @@ void wxOSXCocoaClassAddWXMethods(Class c)
+     wxOSX_CLASS_ADD_METHOD(c, @selector(scrollWheel:), (IMP) wxOSX_mouseEvent, "v@:@" )
+     wxOSX_CLASS_ADD_METHOD(c, @selector(mouseEntered:), (IMP) wxOSX_mouseEvent, "v@:@" )
+     wxOSX_CLASS_ADD_METHOD(c, @selector(mouseExited:), (IMP) wxOSX_mouseEvent, "v@:@" )
++        
++#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
++    wxOSX_CLASS_ADD_METHOD(c, @selector(magnifyWithEvent:), (IMP)wxOSX_mouseEvent, "v@:@")
++#endif
+ 
+     wxOSX_CLASS_ADD_METHOD(c, @selector(cursorUpdate:), (IMP) wxOSX_cursorUpdate, "v@:@" )
+ 
+diff --git a/wxPython/build_options.py b/wxPython/build_options.py
+index 72eb31f..2f88ade 100644
+--- a/wxPython/build_options.py
++++ b/wxPython/build_options.py
+@@ -5,6 +5,6 @@ INSTALL_MULTIVERSION=1
+ FLAVOUR=""
+ EP_ADD_OPTS=1
+ EP_FULL_VER=0
+-WX_CONFIG="/opt/wx/current/bin/wx-config --toolkit=gtk2 --unicode=yes --version=2.9 2>/dev/null "
+-WXPORT="gtk2"
+-MONOLITHIC=0
++WX_CONFIG="/Users/ajo/Documents/work/kicad/osxbuilder/output/bin/wx-config"
++WXPORT="osx_cocoa"
++MONOLITHIC=1
+diff --git a/wxPython/src/wx.pth b/wxPython/src/wx.pth
+index 5d012b0..fb6edaa 100644
+--- a/wxPython/src/wx.pth
++++ b/wxPython/src/wx.pth
+@@ -1 +1 @@
+-wx-2.9.5-gtk2
++wx-2.9.5-osx_cocoa
+diff --git a/wxPython/wx/build/build_options.py b/wxPython/wx/build/build_options.py
+index 72eb31f..2f88ade 100644
+--- a/wxPython/wx/build/build_options.py
++++ b/wxPython/wx/build/build_options.py
+@@ -5,6 +5,6 @@ INSTALL_MULTIVERSION=1
+ FLAVOUR=""
+ EP_ADD_OPTS=1
+ EP_FULL_VER=0
+-WX_CONFIG="/opt/wx/current/bin/wx-config --toolkit=gtk2 --unicode=yes --version=2.9 2>/dev/null "
+-WXPORT="gtk2"
+-MONOLITHIC=0
++WX_CONFIG="/Users/ajo/Documents/work/kicad/osxbuilder/output/bin/wx-config"
++WXPORT="osx_cocoa"
++MONOLITHIC=1
