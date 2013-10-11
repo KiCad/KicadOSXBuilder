@@ -13,8 +13,8 @@ KICAD_BRANCH="lp:~cern-kicad/kicad/testing"
 LIBRARY_DIRECTORY=library
 
 WXPYTHON_VERSION_MAJOR=2.9
-# WXPYTHON_VERSION_MINOR=5
-WXPYTHON_VERSION_MINOR=4
+WXPYTHON_VERSION_MINOR=5
+#WXPYTHON_VERSION_MINOR=4
 WXPYTHON_VERSION="${WXPYTHON_VERSION_MAJOR}.${WXPYTHON_VERSION_MINOR}.0"
 WXPYTHON_SOURCE_DIRECTORY=wxPython-src-$WXPYTHON_VERSION
 WXPYTHON_DOWNLOAD_URL=http://downloads.sourceforge.net/project/wxpython/wxPython/$WXPYTHON_VERSION/$WXPYTHON_SOURCE_DIRECTORY.tar.bz2
@@ -368,8 +368,7 @@ step5()
 	done
 	CMAKE_ARCHITECTURE_STRING=${CMAKE_ARCHITECTURE_STRING%;}
 
-	cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_TESTING_VERSION=ON                                        \
-	                                         -DKICAD_SCRIPTING=ON                                              \
+	cmake $SOURCE_DIRECTORY/$KICAD_DIRECTORY -DKICAD_SCRIPTING=ON                                              \
 	                                         -DKICAD_SCRIPTING_MODULES=ON                                      \
 	                                         -DKICAD_SCRIPTING_WXPYTHON=ON                                     \
 	                                         -DCMAKE_CXX_FLAGS=-D__ASSERTMACROS__                              \
