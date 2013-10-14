@@ -7,8 +7,8 @@ MAKE_THREAD_COUNT=0           # The number of threads for make to use
 CPU_COUNT=4                   # The number of CPUs (core) in the system (defaults to 4)
 
 KICAD_DIRECTORY=kicad
-KICAD_BRANCH="lp:~cern-kicad/kicad/testing"
-# KICAD_BRANCH="lp:kicad"
+KICAD_BRANCH="lp:kicad"
+# KICAD_BRANCH="lp:~cern-kicad/kicad/testing"
 # KICAD_BRANCH="lp:~kicad-testing-committers/kicad/testing"
 LIBRARY_DIRECTORY=library
 
@@ -53,6 +53,8 @@ print_usage()
 	echo "                       list of steps or a step number followed by a comma followed by "..." ( eg. 3,... ). The later"
 	echo "                       syntax executes the step provided plus the following steps up until the last."
 	echo ""
+	echo "-C / --cern-branch : Selects the CERN branch, that includes push&shove router, GAL and new TOOL framework"
+	echo ""
 
 	if [ "$1" != "" ]; then
 		exit 1
@@ -94,6 +96,12 @@ while [ "$1" != "" ]; do
 		# The user might select a debug build via this flag
 		-d | --debug )
 		BUILD_TYPE=Debug
+		;;
+
+		# CERN Branch
+		-C | --cern-branch)
+		KICAD_BRANCH="lp:~cern-kicad/kicad/testing"
+		KICAD_DIRECTORY=cern-kicad
 		;;
 
 		# Print the help text
@@ -270,15 +278,12 @@ step2()
 	STEP_NUMBER=2
 	print_step_starting_message
 
-	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch $KICAD_BRANCH kicad ; cd ..) || exit_on_build_error
+	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch $KICAD_BRANCH $KICAD_DIRECTORY ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$KICAD_DIRECTORY && (cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
 	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY && (cd $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
-    cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY
-    echo "patching kicad sources ..."
-    patch -p1 -N < $PATCH_DIRECTORY/kicad_misc.patch 
 
 }
 
