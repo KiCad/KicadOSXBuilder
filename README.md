@@ -26,3 +26,12 @@ used.
 -d / --debug: build a debug configuration binary.
 
 -h / --help: show help text.
+
+-s / --steps: Select which steps to execute, either a single step number in the range
+[1-8] or a comma separated list of steps or a step number followed by a comma followed 
+by ... ( eg. 3,... ). The later syntax executes the step provided plus the following 
+steps up until the last.
+
+-C / --cern-branch : Selects the CERN branch, that includes push&shove router, GAL 
+and new TOOL framework
+
