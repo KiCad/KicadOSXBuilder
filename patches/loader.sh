@@ -17,4 +17,4 @@ export PYTHONPATH=$KICAD_APP/Contents/Frameworks/python2.7/site-packages/:$PYTHO
 
 export KICAD=$KICAD_DATA
 
-$DIR/`basename $0`.bin $*
+$DIR/`basename $0`.bin "$*"

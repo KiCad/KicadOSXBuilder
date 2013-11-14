@@ -176,12 +176,6 @@ init()
 
 	MAKE_THREAD_COUNT=-j$(($CPU_COUNT*2)) # use twice as many threads as CPUs (cores) are in the system
 
-	mkdir -p $BUILD_DIRECTORY
-	mkdir -p $PREFIX_DIRECTORY
-	mkdir -p $PACKAGE_DIRECTORY
-	mkdir -p $ARCHIVE_DIRECTORY
-	mkdir -p $SOURCE_DIRECTORY
-
 	if [ $BUILD_TYPE = Debug ]; then
 		WXWIDGETS_ADDITIONAL_FLAGS=--enable-debug
 		KICAD_BUILD_FLAGS="-DCMAKE_BUILD_TYPE=Debug"
@@ -190,6 +184,12 @@ init()
 		PACKAGE_DIRECTORY=$PACKAGE_DIRECTORY-debug
 		REVISION_APPENDIX=-debug
 	fi
+
+	mkdir -p $BUILD_DIRECTORY
+	mkdir -p $PREFIX_DIRECTORY
+	mkdir -p $PACKAGE_DIRECTORY
+	mkdir -p $ARCHIVE_DIRECTORY
+	mkdir -p $SOURCE_DIRECTORY
 
 }
 
@@ -319,6 +319,7 @@ step3()
 	                                                                             --enable-monolithic	\
 	                                                                             --enable-svg               \
 	                                                                             --with-expat		\
+	                                                                             --with-macosx-version-min=10.7 \
 	                                                                             --enable-universal-binary="${UNIVERSAL_BINARY_STRING}" \
 	                                                                             $WXWIDGETS_ADDITIONAL_FLAGS || exit_on_build_error
 
