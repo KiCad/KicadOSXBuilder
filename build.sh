@@ -291,7 +291,13 @@ step2()
         do
             if test -f $p; then
                 echo "patch: $p"
-                patch -p1 -N < $p || exit_on_build_error
+                if ! patch -N -p1 < $p &> /dev/null ; then
+                    # See if it was applied already? (un-apply and
+                    # re-apply) If that doesn't work something has
+                    # changed and human intervention is needed.
+                    patch -s -R -p1 < $p &> /dev/null && patch -s -p1 < $p &> /dev/null \
+                        || ( echo "Could not apply!" && exit_on_build_error )
+                fi
             fi
         done
 }
