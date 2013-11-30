@@ -1,10 +1,10 @@
 === modified file 'CMakeLists.txt'
---- old/CMakeLists.txt  2013-11-18 16:04:23 +0000
-+++ new/CMakeLists.txt  2013-11-21 20:01:31 +0000
-@@ -159,2 +159,2 @@
+--- old/CMakeLists.txt	2013-11-18 16:04:23 +0000
++++ new/CMakeLists.txt	2013-11-30 20:27:44 +0000
+@@ -159,7 +159,35 @@
          set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs" )
      endif()
-
+ 
 -endif( CMAKE_COMPILER_IS_GNUCXX )
 +elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang" )
 +
