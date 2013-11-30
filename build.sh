@@ -284,7 +284,16 @@ step2()
 	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY || (cd $SOURCE_DIRECTORY; bzr branch lp:~kicad-lib-committers/kicad/library ; cd ..) || exit_on_build_error
 	test -d $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY && (cd $SOURCE_DIRECTORY/$LIBRARY_DIRECTORY; bzr pull; cd ..) || exit_on_build_error
 
-
+        # Patches should be named NN_kicad_patchname.patch or NN_cern-kicad_patchname.patch
+        echo "Applying local $KICAD_DIRECTORY patches..."
+        cd $SOURCE_DIRECTORY/$KICAD_DIRECTORY
+        for p in $PATCH_DIRECTORY/[0-9][0-9]_${KICAD_DIRECTORY}_*.patch
+        do
+            if test -f $p; then
+                echo "patch: $p"
+                patch -p1 -N < $p || exit_on_build_error
+            fi
+        done
 }
 
 step3()
