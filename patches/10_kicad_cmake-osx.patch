@@ -1,0 +1,54 @@
+=== modified file 'CMakeLists.txt'
+--- old/CMakeLists.txt	2013-11-18 16:04:23 +0000
++++ new/CMakeLists.txt	2013-11-30 20:27:44 +0000
+@@ -159,7 +159,35 @@
+         set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs" )
+     endif()
+ 
+-endif( CMAKE_COMPILER_IS_GNUCXX )
++elseif( "${CMAKE_CXX_COMPILER_ID}" MATCHES ".*Clang" )
++
++    # Establish -Wall early, so specialized relaxations of this may come
++    # subsequently on the command line, such as in pcbnew/github/CMakeLists.txt
++    set( CMAKE_C_FLAGS   "-Wall ${CMAKE_C_FLAGS}" )
++    set( CMAKE_CXX_FLAGS "-Wall ${CMAKE_CXX_FLAGS}" )
++
++    set( CMAKE_C_FLAGS_RELEASE   "-O2" )
++    set( CMAKE_CXX_FLAGS_RELEASE "-O2" )
++
++    set( CMAKE_C_FLAGS_DEBUG   "-g3 -ggdb3 -DDEBUG" )
++    set( CMAKE_CXX_FLAGS_DEBUG "-g3 -ggdb3 -DDEBUG" )
++
++    set( CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} -DNDEBUG" )
++    set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
++
++    # We build DLL/DSOs from static libraries, so create position independent code
++    # for all cases, since we do not have DLL/DSO specific static libraries.
++    # Subdirectories via add_subdirectores() reference this variable, and it is either set or empty,
++    # empty for Windows.
++    set( PIC_FLAG -fPIC )
++
++    set( CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} ${PIC_FLAG}" )
++    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PIC_FLAG}" )
++
++    # enforce libstdc++ on 10.9
++    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libstdc++" )
++
++endif()
+
+ if( KICAD_KEEPCASE )
+     add_definitions( -DKICAD_KEEPCASE )
+
+=== modified file 'CMakeModules/download_boost.cmake'
+--- old/CMakeModules/download_boost.cmake   2013-11-14 22:51:11 +0000
++++ new/CMakeModules/download_boost.cmake   2013-11-21 20:01:31 +0000
+@@ -139,10 +139,8 @@
+     BUILD_COMMAND   ./b2
+                     variant=release
+                     threading=multi
+-                    toolset=gcc
+                     ${PIC_STUFF}
+                     ${b2_libs}
+-                    #link=static
+                     --prefix=<INSTALL_DIR>
+                     install
