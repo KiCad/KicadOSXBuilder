@@ -5,11 +5,18 @@ It packs wxpython and pcbnew plugins together into the data folder at the root o
 output directory (which can be found in package/), and wraps all kicad apps to use
 the libraries in there.
 
-You have got to simply invoke the **build.sh** script to build a universal 32 and 64bit
+You have got to simply* invoke the **build.sh** script to build a universal 32 and 64bit
 product in release configuration.
 
-It's my first experiencie packaging Mac OSX apps, so it can be done better for sure,
+It's my first experience packaging Mac OSX apps, so it can be done better for sure,
 it works anyway ;)
+
+*Note: Before running this script, some prerequisites need to be satisfied.
+
+1. bzr, bzrtools, glew and swig must be installed. They can be easily installed by first installing MacPorts (http://www.macports.org/install.php) and running "sudo port install bzr bzrtools glew swig".
+2. An account is required on LaunchPad.net. Create an account, and upload a generated SSH key to the website. (https://help.launchpad.net/YourAccount/CreatingAnSSHKeyPair)
+3. In terminal, run 'bzr launchpad-login username' and 'bzr whoami "Your Name name@example.com"' using the login information from launchpad.net.
+
 
 ##Options
 
