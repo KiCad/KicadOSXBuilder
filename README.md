@@ -1,3 +1,11 @@
+This tool is unmaintaned anymore, please refer to KiCad dev mailing list
+about how to build KiCad on OSX now. The main source has been modified to
+build KiCad on OSX.
+
+If somebody wants to step up and update this tool to work with the latest
+sources please contact me at miguelangel <<<<>>> ajo.es
+
+
 #Kicad OSX Builder
 
 This is a build system to build universal OSX kicad binaries with scripting support.
